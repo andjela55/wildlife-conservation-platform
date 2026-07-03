@@ -1,0 +1,30 @@
+.detail-section {
+  border-top: 1px solid #e7ece8;
+  margin-top: 22px;
+  padding-top: 18px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.detail-grid div {
+  border: 1px solid #e2e8e4;
+  border-radius: 7px;
+  padding: 12px;
+}
+
+.detail-grid strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+}
+
+.section-spacer {
+  border-top: 1px solid #e7ece8;
+  margin-top: 28px;
+  padding-top: 22px;
+}

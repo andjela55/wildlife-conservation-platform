@@ -1,0 +1,172 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Animals</h1>
+      <p>Animal registry with location, report, and alert history.</p>
+    </div>
+    <button class="secondary" type="button" (click)="load()" [disabled]="isLoading">Refresh</button>
+  </header>
+
+  <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="message success">{{ successMessage }}</div>
+
+  <div class="grid two">
+    <section class="table-panel">
+      <h2>Animal Registry</h2>
+      <div class="table-wrap" *ngIf="animals.length; else noAnimals">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Subspecies</th>
+              <th>Sex</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="selectable-row"
+              *ngFor="let animal of animals"
+              [class.selected]="selectedAnimal?.id === animal.id"
+              (click)="selectAnimal(animal)"
+            >
+              <td>{{ animal.name }}</td>
+              <td>{{ getSubspeciesName(animal.subspeciesId) }}</td>
+              <td>{{ animal.sex }}</td>
+              <td><span class="pill">{{ animal.isActive ? 'Active' : 'Inactive' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noAnimals>
+        <div class="empty">No animals found.</div>
+      </ng-template>
+
+      <section class="detail-section" *ngIf="selectedAnimal">
+        <h2>{{ selectedAnimal.name }}</h2>
+        <div class="detail-grid">
+          <div>
+            <span class="muted">Locations</span>
+            <strong>{{ selectedLocations.length }}</strong>
+          </div>
+          <div>
+            <span class="muted">Reports</span>
+            <strong>{{ selectedReports.length }}</strong>
+          </div>
+          <div>
+            <span class="muted">Alerts</span>
+            <strong>{{ selectedAlerts.length }}</strong>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Latest coordinates</th>
+                <th>Recorded</th>
+                <th>Signal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let point of selectedLocations | slice:0:5">
+                <td>{{ point.latitude }}, {{ point.longitude }}</td>
+                <td>{{ point.recordedAt | date:'short' }}</td>
+                <td>{{ point.signalType }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <h2>Create Animal</h2>
+      <form class="form-grid" [formGroup]="animalForm" (ngSubmit)="createAnimal()">
+        <label>
+          Name
+          <input formControlName="name" maxlength="120" />
+        </label>
+        <label>
+          Subspecies
+          <select formControlName="subspeciesId">
+            <option [ngValue]="null">Select subspecies</option>
+            <option *ngFor="let item of subspecies" [ngValue]="item.id">{{ item.name }}</option>
+          </select>
+        </label>
+        <div class="form-row">
+          <label>
+            Sex
+            <select formControlName="sex">
+              <option *ngFor="let option of animalSexOptions" [value]="option">{{ option }}</option>
+            </select>
+          </label>
+          <label>
+            Date of birth
+            <input type="date" formControlName="dateOfBirth" />
+          </label>
+        </div>
+        <label>
+          Notes
+          <textarea formControlName="notes" maxlength="1000"></textarea>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive" />
+          Active
+        </label>
+        <button type="submit">Create animal</button>
+      </form>
+
+      <h2 class="section-spacer">Create Location Point</h2>
+      <form class="form-grid" [formGroup]="locationForm" (ngSubmit)="createLocationPoint()">
+        <div class="form-row">
+          <label>
+            Animal
+            <select formControlName="animalId">
+              <option [ngValue]="null">Select animal</option>
+              <option *ngFor="let animal of animals" [ngValue]="animal.id">{{ animal.name }}</option>
+            </select>
+          </label>
+          <label>
+            Collar
+            <select formControlName="collarId">
+              <option [ngValue]="null">Select collar</option>
+              <option *ngFor="let collar of collars" [ngValue]="collar.id">{{ collar.serialNumber }}</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Latitude
+            <input type="number" step="0.000001" formControlName="latitude" />
+          </label>
+          <label>
+            Longitude
+            <input type="number" step="0.000001" formControlName="longitude" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Altitude
+            <input type="number" step="0.01" formControlName="altitude" />
+          </label>
+          <label>
+            Signal
+            <select formControlName="signalType">
+              <option *ngFor="let option of signalTypeOptions" [value]="option">{{ option }}</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Recorded at
+          <input type="datetime-local" formControlName="recordedAt" />
+        </label>
+        <label>
+          Notes
+          <textarea formControlName="notes" maxlength="1000"></textarea>
+        </label>
+        <button type="submit">Create location point</button>
+      </form>
+    </section>
+  </div>
+</section>

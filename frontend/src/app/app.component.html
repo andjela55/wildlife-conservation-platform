@@ -1,0 +1,21 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">WC</span>
+      <span>Wildlife Conservation</span>
+    </div>
+
+    <nav class="nav-list" aria-label="Primary navigation">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/species" routerLinkActive="active">Species</a>
+      <a routerLink="/animals" routerLinkActive="active">Animals</a>
+      <a routerLink="/collars" routerLinkActive="active">Collars</a>
+      <a routerLink="/reports" routerLinkActive="active">Reports</a>
+      <a routerLink="/alerts" routerLinkActive="active">Alerts</a>
+    </nav>
+  </aside>
+
+  <main class="workspace">
+    <router-outlet></router-outlet>
+  </main>
+</div>

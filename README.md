@@ -1,8 +1,15 @@
 # Wildlife Conservation Platform
 
-Backend MVP for tracking wildlife with GPS collars, ranger reports, and operational alerts.
+MVP for tracking wildlife with GPS collars, ranger reports, and operational alerts.
 
-The current phase is a .NET 8 Web API. Authentication, Angular, Android, and ESP32 integrations are intentionally out of scope for this MVP.
+The repo now contains the .NET backend and an Angular frontend. Authentication, Android, and ESP32 integrations are intentionally out of scope for this MVP.
+
+## Repository Structure
+
+- `backend/`
+  - .NET 8 Web API solution and library projects.
+- `frontend/`
+  - Angular app using NgModules, routing, and reactive forms.
 
 ## Backend Stack
 
@@ -13,7 +20,15 @@ The current phase is a .NET 8 Web API. Authentication, Angular, Android, and ESP
 - Swagger/OpenAPI
 - xUnit test project
 
-## Solution Structure
+## Frontend Stack
+
+- Angular 16
+- NgModules
+- Reactive forms
+- Angular Router
+- API proxy to the backend
+
+## Backend Solution Structure
 
 - `WildlifeConservation.Api`
   - Controllers, Swagger, startup, API response DTOs, and response mapping profiles.
@@ -57,10 +72,16 @@ The current phase is a .NET 8 Web API. Authentication, Angular, Android, and ESP
 
 ## Run Locally
 
+Backend commands are run from:
+
+```powershell
+cd backend
+```
+
 Update the PostgreSQL connection string in:
 
 ```text
-WildlifeConservation.Api/appsettings.json
+backend/WildlifeConservation.Api/appsettings.json
 ```
 
 Default connection:
@@ -94,11 +115,37 @@ http://localhost:5191/swagger
 https://localhost:7246/swagger
 ```
 
-## Build And Test
+Start the Angular frontend from a second terminal:
 
 ```powershell
+cd frontend
+npm install
+npm start
+```
+
+Angular runs at:
+
+```text
+http://localhost:4200
+```
+
+The frontend uses `frontend/proxy.conf.json` to send `/api` requests to `http://localhost:5191`.
+
+## Build And Test
+
+Backend:
+
+```powershell
+cd backend
 dotnet build WildlifeConservationPlatform.sln
 dotnet test WildlifeConservationPlatform.sln
+```
+
+Frontend:
+
+```powershell
+cd frontend
+npm run build
 ```
 
 ## MVP Domain
