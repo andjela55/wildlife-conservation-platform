@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="leaf" x1="12" y1="54" x2="52" y2="10" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f3b2e"/>
+      <stop offset="1" stop-color="#5d8a3d"/>
+    </linearGradient>
+  </defs>
+  <path d="M54 8c-13.1.6-24 4.7-32 12.8C13.9 29 10 40 9.5 53.4c13.4-.5 24.4-4.6 32.5-12.7C50.1 32.5 54.2 21.4 54 8Z" fill="url(#leaf)"/>
+  <path d="M17 47c8.3-15.3 20.1-26.7 34.6-34.1" fill="none" stroke="#f7f4e9" stroke-width="3.2" stroke-linecap="round"/>
+  <g fill="#f7f4e9">
+    <ellipse cx="31" cy="38" rx="6.8" ry="5.8" transform="rotate(-18 31 38)"/>
+    <ellipse cx="22" cy="29.5" rx="3.5" ry="4.8" transform="rotate(-23 22 29.5)"/>
+    <ellipse cx="30" cy="25.2" rx="3.5" ry="5" transform="rotate(-8 30 25.2)"/>
+    <ellipse cx="39" cy="27.3" rx="3.5" ry="4.8" transform="rotate(18 39 27.3)"/>
+    <ellipse cx="44" cy="35" rx="3.2" ry="4.4" transform="rotate(35 44 35)"/>
+  </g>
+</svg>

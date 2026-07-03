@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 128" role="img" aria-labelledby="title desc">
+  <title id="title">WildTrack logo</title>
+  <desc id="desc">WildTrack leaf and paw logo with the phrase Track, Protect, Conserve.</desc>
+  <defs>
+    <linearGradient id="leaf" x1="20" y1="92" x2="92" y2="18" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f3b2e"/>
+      <stop offset="1" stop-color="#5d8a3d"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(12 12)">
+    <path d="M88 7c-22.2 1.1-40.6 8-54.2 21.6C20 42.4 13.3 61.1 12.5 83.8c22.7-.8 41.4-7.8 55.1-21.4C81.3 48.5 88.3 29.6 88 7Z" fill="url(#leaf)"/>
+    <path d="M26 72c14-25.8 33.9-45 58.5-57.5" fill="none" stroke="#f7f4e9" stroke-width="4.6" stroke-linecap="round"/>
+    <g fill="#f7f4e9">
+      <ellipse cx="47" cy="57" rx="10.4" ry="8.6" transform="rotate(-18 47 57)"/>
+      <ellipse cx="32.6" cy="43.6" rx="5.4" ry="7.3" transform="rotate(-23 32.6 43.6)"/>
+      <ellipse cx="45.6" cy="36.8" rx="5.4" ry="7.6" transform="rotate(-8 45.6 36.8)"/>
+      <ellipse cx="59.8" cy="40" rx="5.4" ry="7.3" transform="rotate(18 59.8 40)"/>
+      <ellipse cx="68" cy="52" rx="5" ry="6.8" transform="rotate(35 68 52)"/>
+    </g>
+  </g>
+  <g fill="#123f32">
+    <text x="126" y="58" font-family="Manrope, Arial, Helvetica, sans-serif" font-size="36" font-weight="800" letter-spacing="1.5">WILDTRACK</text>
+    <text x="128" y="84" font-family="Manrope, Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="2.4">TRACK • PROTECT • CONSERVE</text>
+  </g>
+</svg>

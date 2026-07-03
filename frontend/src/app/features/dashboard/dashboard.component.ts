@@ -39,6 +39,38 @@ export class DashboardComponent implements OnInit {
     return this.alerts.filter((alert) => !alert.isResolved && alert.severity === 'Critical').slice(0, 5);
   }
 
+  get recentAlerts(): Alert[] {
+    return this.alerts.filter((alert) => !alert.isResolved).slice(0, 3);
+  }
+
+  get recentReports(): RangerReport[] {
+    return this.reports.slice(0, 3);
+  }
+
+  get topAnimals(): Animal[] {
+    return this.animals.filter((animal) => animal.isActive).slice(0, 4);
+  }
+
+  get mapLocations(): LocationPoint[] {
+    return this.latestLocations.slice(0, 6);
+  }
+
+  mapX(point: LocationPoint): number {
+    return Math.min(88, Math.max(8, ((point.longitude + 180) / 360) * 100));
+  }
+
+  mapY(point: LocationPoint): number {
+    return Math.min(84, Math.max(12, ((90 - point.latitude) / 180) * 100));
+  }
+
+  getAnimalName(animalId: number | null | undefined): string {
+    if (!animalId) {
+      return 'Area report';
+    }
+
+    return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
+  }
+
   load(): void {
     this.isLoading = true;
     this.errorMessage = '';
