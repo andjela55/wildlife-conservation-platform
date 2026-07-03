@@ -1,0 +1,24 @@
+@WildlifeConservation.Api_HostAddress = http://localhost:5191
+
+GET {{WildlifeConservation.Api_HostAddress}}/api/species
+Accept: application/json
+
+###
+
+GET {{WildlifeConservation.Api_HostAddress}}/api/location-points/latest
+Accept: application/json
+
+###
+
+POST {{WildlifeConservation.Api_HostAddress}}/api/ranger-reports
+Content-Type: application/json
+
+{
+  "animalId": 1,
+  "userId": 1,
+  "reportType": "Sighting",
+  "severity": "Low",
+  "latitude": -1.9348,
+  "longitude": 35.1533,
+  "description": "Animal sighted near water point."
+}

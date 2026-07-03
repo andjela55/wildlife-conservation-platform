@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\WildlifeConservation.Repositories\WildlifeConservation.Repositories.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.DTOs\WildlifeConservation.DTOs.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.Models\WildlifeConservation.Models.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.Shared\WildlifeConservation.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

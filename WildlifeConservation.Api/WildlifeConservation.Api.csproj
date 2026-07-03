@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WildlifeConservation.Services\WildlifeConservation.Services.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.Repositories\WildlifeConservation.Repositories.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.Models\WildlifeConservation.Models.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.Shared\WildlifeConservation.Shared.csproj" />
+    <ProjectReference Include="..\WildlifeConservation.DTOs\WildlifeConservation.DTOs.csproj" />
+  </ItemGroup>
+
+</Project>

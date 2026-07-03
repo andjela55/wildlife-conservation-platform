@@ -1,0 +1,29 @@
+using Microsoft.AspNetCore.Mvc;
+
+namespace WildlifeConservation.Api.Controllers;
+
+[ApiController]
+[Route("api/location-points")]
+public class LocationPointsController(ILocationPointService locationPointService, IMapper mapper) : ControllerBase
+{
+    [HttpPost]
+    public async Task<ActionResult<LocationPointResponseDto>> Create(CreateLocationPointDto dto, CancellationToken cancellationToken)
+    {
+        var created = mapper.Map<LocationPointResponseDto>(await locationPointService.CreateAsync(dto, cancellationToken));
+        return Created($"/api/location-points/by-animal/{created.AnimalId}", created);
+    }
+
+    [HttpGet("latest")]
+    public async Task<ActionResult<List<LocationPointResponseDto>>> GetLatest(CancellationToken cancellationToken)
+    {
+        var locations = await locationPointService.GetLatestAsync(cancellationToken);
+        return Ok(mapper.Map<List<LocationPointResponseDto>>(locations));
+    }
+
+    [HttpGet("by-animal/{animalId:int}")]
+    public async Task<ActionResult<List<LocationPointResponseDto>>> GetByAnimal(int animalId, CancellationToken cancellationToken)
+    {
+        var locations = await locationPointService.GetByAnimalAsync(animalId, cancellationToken);
+        return Ok(mapper.Map<List<LocationPointResponseDto>>(locations));
+    }
+}

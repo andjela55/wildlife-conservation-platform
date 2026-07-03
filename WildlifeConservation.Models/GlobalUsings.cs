@@ -1,0 +1,10 @@
+global using WildlifeConservation.Models.Alerts;
+global using WildlifeConservation.Models.Animals;
+global using WildlifeConservation.Models.CollarAssignments;
+global using WildlifeConservation.Models.Collars;
+global using WildlifeConservation.Models.LocationPoints;
+global using WildlifeConservation.Models.RangerReports;
+global using WildlifeConservation.Models.Species;
+global using WildlifeConservation.Models.Subspecies;
+global using WildlifeConservation.Models.Users;
+global using WildlifeConservation.Shared.Enums;
