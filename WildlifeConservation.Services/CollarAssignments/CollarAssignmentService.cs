@@ -4,6 +4,7 @@ public class CollarAssignmentService(
     ICollarAssignmentRepository collarAssignmentRepository,
     IAnimalRepository animalRepository,
     ICollarRepository collarRepository,
+    ITransactionService transactionService,
     IMapper mapper) : ICollarAssignmentService
 {
     public async Task<CollarAssignment> CreateAsync(CreateCollarAssignmentDto dto, CancellationToken cancellationToken = default)
@@ -40,10 +41,11 @@ public class CollarAssignmentService(
         assignment.Notes = dto.Notes?.Trim();
         collar.Status = CollarStatus.Assigned;
 
-        await collarRepository.UpdateAsync(collar, cancellationToken);
-        assignment = await collarAssignmentRepository.InsertAsync(assignment, cancellationToken);
-
-        return assignment;
+        return await transactionService.ExecuteAsync(async () =>
+        {
+            await collarRepository.UpdateAsync(collar, cancellationToken);
+            return await collarAssignmentRepository.InsertAsync(assignment, cancellationToken);
+        }, cancellationToken);
     }
 
     public async Task<CollarAssignment> UnassignAsync(int id, UnassignCollarDto dto, CancellationToken cancellationToken = default)
@@ -72,13 +74,16 @@ public class CollarAssignmentService(
             collar.Status = CollarStatus.Available;
         }
 
-        assignment = await collarAssignmentRepository.UpdateAsync(assignment, cancellationToken);
-
-        if (collar is not null)
+        return await transactionService.ExecuteAsync(async () =>
         {
-            await collarRepository.UpdateAsync(collar, cancellationToken);
-        }
+            var updatedAssignment = await collarAssignmentRepository.UpdateAsync(assignment, cancellationToken);
 
-        return assignment;
+            if (collar is not null)
+            {
+                await collarRepository.UpdateAsync(collar, cancellationToken);
+            }
+
+            return updatedAssignment;
+        }, cancellationToken);
     }
 }

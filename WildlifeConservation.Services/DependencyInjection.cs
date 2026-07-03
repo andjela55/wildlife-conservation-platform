@@ -8,6 +8,7 @@ using WildlifeConservation.Services.LocationPoints;
 using WildlifeConservation.Services.RangerReports;
 using WildlifeConservation.Services.Species;
 using WildlifeConservation.Services.Subspecies;
+using WildlifeConservation.Services.Transactions;
 
 namespace WildlifeConservation.Services;
 
@@ -25,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<ILocationPointService, LocationPointService>();
         services.AddScoped<IRangerReportService, RangerReportService>();
         services.AddScoped<IAlertService, AlertService>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         return services;
     }

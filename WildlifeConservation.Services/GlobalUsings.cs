@@ -22,3 +22,4 @@ global using WildlifeConservation.Repositories.Repositories.Subspecies;
 global using WildlifeConservation.Repositories.Repositories.Users;
 global using WildlifeConservation.Shared;
 global using WildlifeConservation.Shared.Enums;
+global using WildlifeConservation.Services.Transactions;
