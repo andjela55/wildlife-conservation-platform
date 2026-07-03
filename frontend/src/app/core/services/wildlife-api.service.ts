@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
 import {
   Alert,
   Animal,
@@ -26,7 +28,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class WildlifeApiService {
-  private readonly baseUrl = '/api';
+
+  private readonly baseUrl = `${environment.apiUrl}/api`;
 
   constructor(private readonly http: HttpClient) {}
 
