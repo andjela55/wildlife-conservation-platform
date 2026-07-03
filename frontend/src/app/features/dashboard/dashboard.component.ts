@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { forkJoin, finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { Alert, Animal, Collar, LocationPoint, RangerReport } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { AlertApiService } from '../../core/services/alert-api.service';
+import { AnimalApiService } from '../../core/services/animal-api.service';
+import { CollarApiService } from '../../core/services/collar-api.service';
+import { LocationPointApiService } from '../../core/services/location-point-api.service';
+import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,7 +21,13 @@ export class DashboardComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private readonly api: WildlifeApiService) {}
+  constructor(
+    private readonly animalApi: AnimalApiService,
+    private readonly collarApi: CollarApiService,
+    private readonly locationPointApi: LocationPointApiService,
+    private readonly rangerReportApi: RangerReportApiService,
+    private readonly alertApi: AlertApiService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -76,11 +86,11 @@ export class DashboardComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      animals: this.api.getAnimals(),
-      collars: this.api.getCollars(),
-      latestLocations: this.api.getLatestLocationPoints(),
-      reports: this.api.getRangerReports(),
-      alerts: this.api.getAlerts()
+      animals: this.animalApi.getAll(),
+      collars: this.collarApi.getAll(),
+      latestLocations: this.locationPointApi.getLatest(),
+      reports: this.rangerReportApi.getAll(),
+      alerts: this.alertApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({

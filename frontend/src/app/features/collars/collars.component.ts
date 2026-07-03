@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { Animal, Collar, collarStatusOptions } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { AnimalApiService } from '../../core/services/animal-api.service';
+import { CollarApiService } from '../../core/services/collar-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 
 @Component({
@@ -42,7 +43,8 @@ export class CollarsComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: WildlifeApiService,
+    private readonly collarApi: CollarApiService,
+    private readonly animalApi: AnimalApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -55,8 +57,8 @@ export class CollarsComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      collars: this.api.getCollars(),
-      animals: this.api.getAnimals()
+      collars: this.collarApi.getAll(),
+      animals: this.animalApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
@@ -77,8 +79,8 @@ export class CollarsComponent implements OnInit {
     }
 
     const value = this.collarForm.getRawValue();
-    this.api
-      .createCollar({
+    this.collarApi
+      .create({
         serialNumber: value.serialNumber,
         model: value.model || null,
         manufacturer: value.manufacturer || null,
@@ -104,8 +106,8 @@ export class CollarsComponent implements OnInit {
     }
 
     const value = this.assignmentForm.getRawValue();
-    this.api
-      .assignCollar({
+    this.collarApi
+      .assign({
         animalId: value.animalId,
         collarId: value.collarId,
         assignedAt: localDateTimeInputToIso(value.assignedAt),
@@ -131,8 +133,8 @@ export class CollarsComponent implements OnInit {
     }
 
     const value = this.unassignForm.getRawValue();
-    this.api
-      .unassignCollar(value.assignmentId, {
+    this.collarApi
+      .unassign(value.assignmentId, {
         unassignedAt: localDateTimeInputToIso(value.unassignedAt),
         reason: value.reason || null,
         notes: value.notes || null

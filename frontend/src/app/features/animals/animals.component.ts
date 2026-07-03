@@ -2,16 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import {
-  Alert,
-  Animal,
-  animalSexOptions,
-  Collar,
-  LocationPoint,
-  RangerReport,
-  signalTypeOptions,
-  Subspecies
+    Alert,
+    Animal,
+    animalSexOptions,
+    Collar,
+    LocationPoint,
+    RangerReport,
+    signalTypeOptions,
+    Subspecies
 } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { AnimalApiService } from '../../core/services/animal-api.service';
+import { CollarApiService } from '../../core/services/collar-api.service';
+import { LocationPointApiService } from '../../core/services/location-point-api.service';
+import { SubspeciesApiService } from '../../core/services/subspecies-api.service';
 import { localDateInputToIso, localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 
 @Component({
@@ -54,7 +57,10 @@ export class AnimalsComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: WildlifeApiService,
+    private readonly animalApi: AnimalApiService,
+    private readonly subspeciesApi: SubspeciesApiService,
+    private readonly collarApi: CollarApiService,
+    private readonly locationPointApi: LocationPointApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -71,9 +77,9 @@ export class AnimalsComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      animals: this.api.getAnimals(),
-      subspecies: this.api.getSubspecies(),
-      collars: this.api.getCollars()
+      animals: this.animalApi.getAll(),
+      subspecies: this.subspeciesApi.getAll(),
+      collars: this.collarApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
@@ -95,9 +101,9 @@ export class AnimalsComponent implements OnInit {
     this.selectedAnimal = animal;
     this.locationForm.patchValue({ animalId: animal.id });
     forkJoin({
-      locations: this.api.getAnimalLocations(animal.id),
-      reports: this.api.getAnimalReports(animal.id),
-      alerts: this.api.getAnimalAlerts(animal.id)
+      locations: this.animalApi.getLocations(animal.id),
+      reports: this.animalApi.getReports(animal.id),
+      alerts: this.animalApi.getAlerts(animal.id)
     }).subscribe({
       next: (result) => {
         this.selectedLocations = result.locations;
@@ -117,8 +123,8 @@ export class AnimalsComponent implements OnInit {
     }
 
     const value = this.animalForm.getRawValue();
-    this.api
-      .createAnimal({
+    this.animalApi
+      .create({
         name: value.name,
         subspeciesId: value.subspeciesId,
         sex: value.sex,
@@ -146,8 +152,8 @@ export class AnimalsComponent implements OnInit {
     }
 
     const value = this.locationForm.getRawValue();
-    this.api
-      .createLocationPoint({
+    this.locationPointApi
+      .create({
         animalId: value.animalId,
         collarId: value.collarId,
         latitude: value.latitude,

@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { Species, Subspecies } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { SpeciesApiService } from '../../core/services/species-api.service';
+import { SubspeciesApiService } from '../../core/services/subspecies-api.service';
 
 @Component({
   selector: 'app-species',
@@ -28,7 +29,8 @@ export class SpeciesComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: WildlifeApiService,
+    private readonly speciesApi: SpeciesApiService,
+    private readonly subspeciesApi: SubspeciesApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -45,8 +47,8 @@ export class SpeciesComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      species: this.api.getSpecies(),
-      subspecies: this.api.getSubspecies()
+      species: this.speciesApi.getAll(),
+      subspecies: this.subspeciesApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
@@ -66,7 +68,7 @@ export class SpeciesComponent implements OnInit {
       return;
     }
 
-    this.api.createSpecies(this.speciesForm.getRawValue()).subscribe({
+    this.speciesApi.create(this.speciesForm.getRawValue()).subscribe({
       next: () => {
         this.successMessage = 'Species created.';
         this.speciesForm.reset();
@@ -84,7 +86,7 @@ export class SpeciesComponent implements OnInit {
       return;
     }
 
-    this.api.createSubspecies(this.subspeciesForm.getRawValue()).subscribe({
+    this.subspeciesApi.create(this.subspeciesForm.getRawValue()).subscribe({
       next: () => {
         this.successMessage = 'Subspecies created.';
         this.subspeciesForm.reset();

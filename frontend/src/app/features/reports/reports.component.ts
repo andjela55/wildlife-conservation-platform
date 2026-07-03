@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { Animal, RangerReport, reportTypeOptions, severityOptions } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { AnimalApiService } from '../../core/services/animal-api.service';
+import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 
 @Component({
@@ -31,7 +32,8 @@ export class ReportsComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: WildlifeApiService,
+    private readonly rangerReportApi: RangerReportApiService,
+    private readonly animalApi: AnimalApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -52,8 +54,8 @@ export class ReportsComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      reports: this.api.getRangerReports(),
-      animals: this.api.getAnimals()
+      reports: this.rangerReportApi.getAll(),
+      animals: this.animalApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
@@ -74,8 +76,8 @@ export class ReportsComponent implements OnInit {
     }
 
     const value = this.reportForm.getRawValue();
-    this.api
-      .createRangerReport({
+    this.rangerReportApi
+      .create({
         animalId: value.animalId || null,
         userId: value.userId,
         reportType: value.reportType,

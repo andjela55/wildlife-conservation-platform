@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { Alert, alertTypeOptions, Animal, Collar, severityOptions } from '../../core/models/wildlife.models';
-import { WildlifeApiService } from '../../core/services/wildlife-api.service';
+import { AlertApiService } from '../../core/services/alert-api.service';
+import { AnimalApiService } from '../../core/services/animal-api.service';
+import { CollarApiService } from '../../core/services/collar-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 
 @Component({
@@ -31,7 +33,9 @@ export class AlertsComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: WildlifeApiService,
+    private readonly alertApi: AlertApiService,
+    private readonly animalApi: AnimalApiService,
+    private readonly collarApi: CollarApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -56,9 +60,9 @@ export class AlertsComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      alerts: this.api.getAlerts(),
-      animals: this.api.getAnimals(),
-      collars: this.api.getCollars()
+      alerts: this.alertApi.getAll(),
+      animals: this.animalApi.getAll(),
+      collars: this.collarApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
@@ -80,8 +84,8 @@ export class AlertsComponent implements OnInit {
     }
 
     const value = this.alertForm.getRawValue();
-    this.api
-      .createAlert({
+    this.alertApi
+      .create({
         animalId: value.animalId,
         collarId: value.collarId || null,
         createdByUserId: value.createdByUserId || null,
@@ -110,7 +114,7 @@ export class AlertsComponent implements OnInit {
   }
 
   resolveAlert(alert: Alert): void {
-    this.api.resolveAlert(alert.id, { resolvedAt: new Date().toISOString() }).subscribe({
+    this.alertApi.resolve(alert.id, { resolvedAt: new Date().toISOString() }).subscribe({
       next: () => {
         this.successMessage = 'Alert resolved.';
         this.load();
