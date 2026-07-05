@@ -50,6 +50,46 @@ $wildlife-theme: mat.define-light-theme((
   --line: rgba(45, 74, 64, 0.14);
   --shadow: 0 12px 30px rgba(31, 52, 43, 0.07);
 }
+@import "leaflet/dist/leaflet.css";
+
+/* Leaflet fix - mora globalno */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  width: 256px !important;
+  height: 256px !important;
+  object-fit: initial !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.leaflet-tile {
+  width: 256px;
+  height: 256px;
+}
 
 html,
 body {
@@ -378,4 +418,43 @@ th {
   button:not(.mat-mdc-button-base) {
     width: 100%;
   }
+}
+.animal-marker {
+  position: relative;
+}
+
+.animal-marker-dot {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(20, 51, 38, 0.25);
+}
+
+.animal-marker-pulse {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  opacity: 0.25;
+}
+
+.signal-fresh .animal-marker-dot,
+.signal-fresh .animal-marker-pulse {
+  background: #23733d;
+}
+
+.signal-stale .animal-marker-dot,
+.signal-stale .animal-marker-pulse {
+  background: #c77d3a;
+}
+
+.signal-old .animal-marker-dot,
+.signal-old .animal-marker-pulse {
+  background: #a4473f;
 }

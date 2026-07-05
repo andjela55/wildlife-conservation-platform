@@ -78,12 +78,14 @@
   width: 22px;
   height: 22px;
   object-fit: contain;
-  filter: brightness(0) saturate(100%) invert(18%) sepia(29%) saturate(765%) hue-rotate(108deg) brightness(92%) contrast(94%);
+  filter: brightness(0) saturate(100%) invert(18%) sepia(29%) saturate(765%)
+    hue-rotate(108deg) brightness(92%) contrast(94%);
   opacity: 1;
 }
 
 .stat-icon.alert img {
-  filter: brightness(0) saturate(100%) invert(46%) sepia(78%) saturate(909%) hue-rotate(359deg) brightness(89%) contrast(95%);
+  filter: brightness(0) saturate(100%) invert(46%) sepia(78%) saturate(909%)
+    hue-rotate(359deg) brightness(89%) contrast(95%);
 }
 
 .stat-icon.animal,
@@ -107,36 +109,86 @@
 
 .habitat-map {
   position: relative;
-  min-height: 530px;
+  height: calc(100vh - 120px);
+  min-height: 560px;
+  border-radius: 24px;
+  width: 100%;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background:
-    linear-gradient(rgba(238, 245, 226, 0.78), rgba(238, 245, 226, 0.78)),
-    url("/assets/images/jungle1.jpg") center / cover no-repeat;
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(31, 77, 58, 0.16);
+  background: #f4efe3;
+  box-shadow: 0 18px 45px rgba(20, 51, 38, 0.12);
 }
 
-.habitat-map::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(28deg, rgba(37, 93, 70, 0.08) 0 2px, transparent 2px 34px),
-    linear-gradient(90deg, rgba(58, 158, 189, 0.18), transparent 18% 78%, rgba(58, 158, 189, 0.18));
+.leaflet-map {
+  height: 100%;
+  width: 100%;
 }
 
 .map-toolbar {
   position: absolute;
-  z-index: 3;
   top: 18px;
   left: 18px;
+  z-index: 500;
 }
 
-.map-toolbar button {
-  background: #ffffff;
-  color: #1c2b25;
-  box-shadow: 0 10px 22px rgba(31, 52, 43, 0.08);
+.secondary {
+  border: 1px solid rgba(31, 77, 58, 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f4d3a;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: #f2f8f4;
+  border-color: #23733d;
+}
+
+.map-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  color: #6b756f;
+  background: rgba(251, 248, 239, 0.72);
+}
+
+.map-side-panel {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 500;
+  width: 320px;
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(31, 77, 58, 0.16);
+  box-shadow: 0 18px 45px rgba(20, 51, 38, 0.14);
+}
+
+.map-side-panel h3 {
+  margin: 0 0 16px;
+  color: #143326;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(31, 77, 58, 0.1);
+
+  span {
+    color: #6b756f;
+  }
+
+  strong {
+    color: #26332d;
+    text-align: right;
+  }
 }
 
 .safe-zone {
@@ -393,7 +445,8 @@
   height: 24px;
   object-fit: contain;
   opacity: 1;
-  filter: saturate(1.35) contrast(1.18) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.36));
+  filter: saturate(1.35) contrast(1.18)
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.36));
 }
 
 .report-item > span,

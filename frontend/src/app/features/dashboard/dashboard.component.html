@@ -2,55 +2,70 @@
   <header class="page-header dashboard-header">
     <div>
       <h1>Dashboard</h1>
-      <p>Real-time overview of tracked animals and field activities.</p>
+      <p>Overview of tracked animals and field activities.</p>
     </div>
+
     <div class="header-actions">
-      <button class="date-button secondary" type="button">May 12 - May 19, 2024</button>
-      <a class="add-report-button" routerLink="/reports">Add Report</a>
+      <button class="date-button secondary" type="button">
+        Current data
+      </button>
+
+      <a class="add-report-button" routerLink="/reports">
+        Add Report
+      </a>
     </div>
   </header>
 
-  <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
+  <div *ngIf="errorMessage" class="message error">
+    {{ errorMessage }}
+  </div>
 
   <div class="metric-row">
     <div class="metric stat-card">
       <span class="stat-icon animal">
         <img src="assets/icons/paw.svg" alt="" />
       </span>
+
       <div>
         <span>Tracked Animals</span>
         <strong>{{ activeAnimalsCount }}</strong>
         <small>Active</small>
       </div>
     </div>
+
     <div class="metric stat-card">
       <span class="stat-icon collar">
         <img src="assets/icons/collar.svg" alt="" />
       </span>
+
       <div>
         <span>Collar Signals</span>
         <strong>{{ assignedCollarsCount }}</strong>
-        <small>Online</small>
+        <small>Assigned collars</small>
       </div>
     </div>
+
     <div class="metric stat-card alert-stat">
       <span class="stat-icon alert">
         <img src="assets/icons/alert.svg" alt="" />
       </span>
+
       <div>
         <span>Alerts</span>
         <strong>{{ unresolvedAlertsCount }}</strong>
         <small>Needs attention</small>
       </div>
     </div>
+
     <div class="metric stat-card">
       <span class="stat-icon report">
         <img src="assets/icons/report.svg" alt="" />
       </span>
+
       <div>
         <span>Reports</span>
         <strong>{{ reports.length }}</strong>
-        <small>This week</small>
+        <small>Total reports</small>
       </div>
     </div>
   </div>
@@ -58,29 +73,79 @@
   <div class="dashboard-grid">
     <section class="habitat-map" aria-label="Latest animal locations">
       <div class="map-toolbar">
-        <button class="secondary" type="button">My Patrol Area</button>
+        <button
+          class="secondary"
+          type="button"
+          (click)="fitToCurrentLocations()"
+          [disabled]="!mapLocations.length"
+        >
+          Fit Animals
+        </button>
       </div>
-      <div class="map-control zoom-in">+</div>
-      <div class="map-control zoom-out">-</div>
-      <div class="map-control layers"></div>
-      <div class="scale-bar">2 km</div>
 
-      <div class="safe-zone"></div>
-      <div class="map-river river-one"></div>
-      <div class="map-river river-two"></div>
+      <div #wildlifeMap class="leaflet-map"></div>
 
-      <button
-        *ngFor="let point of mapLocations"
-        class="map-marker"
-        type="button"
-        [style.left.%]="mapX(point)"
-        [style.top.%]="mapY(point)"
-      >
-        <i></i>
-        <span>{{ getAnimalName(point.animalId) }}</span>
-      </button>
+      <div *ngIf="!isLoading && !mapLocations.length" class="map-empty">
+        No latest location points.
+      </div>
 
-      <div *ngIf="!mapLocations.length" class="map-empty">No latest location points.</div>
+      <aside class="map-side-panel" *ngIf="selectedLocation">
+        <div class="map-side-panel-header">
+          <div>
+            <h3>{{ getAnimalName(selectedLocation.animalId) }}</h3>
+            <p>Latest collar signal</p>
+          </div>
+
+          <button
+            class="map-panel-close"
+            type="button"
+            aria-label="Close animal details"
+            (click)="selectedLocation = null"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="detail-row">
+          <span>Animal ID</span>
+          <strong>{{ selectedLocation.animalId }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Collar ID</span>
+          <strong>{{ selectedLocation.collarId }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Signal type</span>
+          <strong>{{ selectedLocation.signalType }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Last signal</span>
+          <strong>{{ selectedLocation.recordedAt | date: "short" }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Latitude</span>
+          <strong>{{ selectedLocation.latitude | number: "1.4-6" }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Longitude</span>
+          <strong>{{ selectedLocation.longitude | number: "1.4-6" }}</strong>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedLocation.altitude !== null">
+          <span>Altitude</span>
+          <strong>{{ selectedLocation.altitude }} m</strong>
+        </div>
+
+        <div class="detail-notes" *ngIf="selectedLocation.notes">
+          <span>Notes</span>
+          <p>{{ selectedLocation.notes }}</p>
+        </div>
+      </aside>
     </section>
 
     <aside class="side-stack">
@@ -89,18 +154,30 @@
           <h2>Recent Alerts</h2>
           <a routerLink="/alerts">View all</a>
         </div>
+
         <div *ngIf="recentAlerts.length; else noAlerts" class="status-list">
           <div class="status-item" *ngFor="let alert of recentAlerts">
-            <span class="alert-badge" [ngClass]="getSeverityClass(alert.severity)">
+            <span
+              class="alert-badge"
+              [ngClass]="getSeverityClass(alert.severity)"
+            >
               <img [src]="getSeverityIcon(alert.severity)" alt="" />
             </span>
+
             <div>
-              <strong>{{ alert.alertType | enumLabel:'AlertType' }}</strong>
-              <small>{{ getAnimalName(alert.animalId) }} - {{ alert.createdAt | date:'shortTime' }}</small>
+              <strong>{{ alert.alertType | enumLabel: "AlertType" }}</strong>
+              <small>
+                {{ getAnimalName(alert.animalId) }} -
+                {{ alert.createdAt | date: "shortTime" }}
+              </small>
             </div>
-            <span class="pill" [ngClass]="getSeverityClass(alert.severity)">{{ alert.severity | enumLabel:'Severity' }}</span>
+
+            <span class="pill" [ngClass]="getSeverityClass(alert.severity)">
+              {{ alert.severity | enumLabel: "Severity" }}
+            </span>
           </div>
         </div>
+
         <ng-template #noAlerts>
           <div class="empty">No open alerts.</div>
         </ng-template>
@@ -111,16 +188,20 @@
           <h2>Recent Reports</h2>
           <a routerLink="/reports">View all</a>
         </div>
+
         <div *ngIf="recentReports.length; else noReports" class="report-list">
           <div class="report-item" *ngFor="let report of recentReports">
             <span></span>
+
             <div>
-              <strong>{{ report.reportType | enumLabel:'ReportType' }}</strong>
-              <small>{{ report.createdAt | date:'MMM d, HH:mm' }}</small>
+              <strong>{{ report.reportType | enumLabel: "ReportType" }}</strong>
+              <small>{{ report.createdAt | date: "MMM d, HH:mm" }}</small>
             </div>
+
             <i></i>
           </div>
         </div>
+
         <ng-template #noReports>
           <div class="empty">No recent reports.</div>
         </ng-template>
@@ -129,49 +210,69 @@
   </div>
 
   <div class="bottom-grid">
-    <section class="table-panel activity-panel">
+    <!-- <section class="table-panel activity-panel">
       <div class="panel-title">
         <h2>Activity Overview</h2>
+
         <div class="chart-legend">
           <span><i class="legend-signals"></i> Collar Signals</span>
           <span><i class="legend-reports"></i> Reports</span>
         </div>
       </div>
-      <svg class="activity-chart" viewBox="0 0 640 190" aria-label="Activity overview">
+
+      <svg
+        class="activity-chart"
+        viewBox="0 0 640 190"
+        aria-label="Activity overview"
+      >
         <path class="grid-line" d="M20 40H620M20 90H620M20 140H620" />
-        <path class="line signals" d="M24 138 C86 132,112 72,168 88 S238 118,288 76 S358 124,414 108 S498 82,616 112" />
-        <path class="line reports" d="M24 154 C92 144,112 98,172 112 S236 140,298 124 S382 152,444 146 S530 112,616 138" />
+
+        <path
+          class="line signals"
+          d="M24 138 C86 132,112 72,168 88 S238 118,288 76 S358 124,414 108 S498 82,616 112"
+        />
+
+        <path
+          class="line reports"
+          d="M24 154 C92 144,112 98,172 112 S236 140,298 124 S382 152,444 146 S530 112,616 138"
+        />
+
         <g class="signal-dots">
           <circle cx="168" cy="88" r="4" />
           <circle cx="288" cy="76" r="4" />
           <circle cx="414" cy="108" r="4" />
           <circle cx="616" cy="112" r="4" />
         </g>
-        <text x="24" y="178">May 12</text>
-        <text x="120" y="178">May 13</text>
-        <text x="216" y="178">May 14</text>
-        <text x="312" y="178">May 15</text>
-        <text x="408" y="178">May 16</text>
-        <text x="504" y="178">May 17</text>
-        <text x="596" y="178">May 19</text>
+
+        <text x="24" y="178">Day 1</text>
+        <text x="120" y="178">Day 2</text>
+        <text x="216" y="178">Day 3</text>
+        <text x="312" y="178">Day 4</text>
+        <text x="408" y="178">Day 5</text>
+        <text x="504" y="178">Day 6</text>
+        <text x="596" y="178">Day 7</text>
       </svg>
-    </section>
+    </section> -->
 
     <section class="panel compact-panel">
       <div class="panel-title">
         <h2>Top Active Animals</h2>
         <a routerLink="/animals">View all</a>
       </div>
+
       <div class="animal-list" *ngIf="topAnimals.length; else noAnimals">
         <div class="animal-item" *ngFor="let animal of topAnimals">
           <span></span>
+
           <div>
             <strong>{{ animal.name }}</strong>
-            <small>Last signal: {{ animal.id + 1 }}m ago</small>
+            <small>{{ animal.isActive ? "Active" : "Inactive" }}</small>
           </div>
+
           <i></i>
         </div>
       </div>
+
       <ng-template #noAnimals>
         <div class="empty">No active animals.</div>
       </ng-template>
@@ -181,6 +282,7 @@
       <div class="panel-title">
         <h2>Quick Actions</h2>
       </div>
+
       <div class="quick-actions">
         <a routerLink="/animals">Add Animal</a>
         <a routerLink="/reports">Add Report</a>
