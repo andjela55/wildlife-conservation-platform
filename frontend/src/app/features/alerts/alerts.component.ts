@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
-import { Alert, alertTypeOptions, Animal, Collar, severityOptions } from '../../core/models/wildlife.models';
+import { Alert, alertTypeOptions, Animal, Collar, Severity, severityOptions } from '../../core/models/wildlife.models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
+import { CurrentUserService } from '../../core/services/current-user.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
+import { enumKey } from '../../core/utils/enum-utils';
 
 @Component({
   selector: 'app-alerts',
@@ -25,7 +27,6 @@ export class AlertsComponent implements OnInit {
   alertForm = this.fb.group({
     animalId: [null, [Validators.required, Validators.min(1)]],
     collarId: [null],
-    createdByUserId: [null],
     alertType: ['Manual', Validators.required],
     severity: ['Medium', Validators.required],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
@@ -36,6 +37,7 @@ export class AlertsComponent implements OnInit {
     private readonly alertApi: AlertApiService,
     private readonly animalApi: AnimalApiService,
     private readonly collarApi: CollarApiService,
+    private readonly currentUser: CurrentUserService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -53,6 +55,10 @@ export class AlertsComponent implements OnInit {
     }
 
     return this.collars.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
+  }
+
+  getSeverityClass(severity: Severity): string {
+    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   load(): void {
@@ -88,7 +94,7 @@ export class AlertsComponent implements OnInit {
       .create({
         animalId: value.animalId,
         collarId: value.collarId || null,
-        createdByUserId: value.createdByUserId || null,
+        createdByUserId: this.currentUser.userId,
         alertType: value.alertType,
         severity: value.severity,
         description: value.description,
@@ -100,7 +106,6 @@ export class AlertsComponent implements OnInit {
           this.alertForm.reset({
             animalId: null,
             collarId: null,
-            createdByUserId: null,
             alertType: 'Manual',
             severity: 'Medium',
             createdAt: toLocalDateTimeInputValue()

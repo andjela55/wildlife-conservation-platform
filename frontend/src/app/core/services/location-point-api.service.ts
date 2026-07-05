@@ -1,16 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CreateLocationPointRequest, LocationPoint } from '../models/wildlife.models';
-import { BaseApiService } from './base-api.service';
+import { environment } from 'src/environments/environment';
+import { LocationPoint } from '../models/wildlife.models';
 
 @Injectable({ providedIn: 'root' })
-export class LocationPointApiService extends BaseApiService<LocationPoint, CreateLocationPointRequest> {
-  protected readonly resourcePath = 'location-points';
+export class LocationPointApiService {
+  private readonly baseUrl = `${environment.apiUrl}/api/location-points`;
 
-  constructor(http: HttpClient) {
-    super(http);
-  }
+  constructor(private readonly http: HttpClient) {}
 
   getLatest(): Observable<LocationPoint[]> {
     return this.http.get<LocationPoint[]>(`${this.baseUrl}/latest`);

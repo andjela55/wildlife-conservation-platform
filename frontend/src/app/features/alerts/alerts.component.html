@@ -29,8 +29,10 @@
             <tr *ngFor="let alert of alerts">
               <td>{{ getAnimalName(alert.animalId) }}</td>
               <td>{{ getCollarSerial(alert.collarId) }}</td>
-              <td>{{ alert.alertType }}</td>
-              <td><span class="pill" [class.medium]="alert.severity === 'Medium'" [class.high]="alert.severity === 'High'" [class.critical]="alert.severity === 'Critical'">{{ alert.severity }}</span></td>
+              <td>{{ alert.alertType | enumLabel:'AlertType' }}</td>
+              <td>
+                <span class="pill" [ngClass]="getSeverityClass(alert.severity)">{{ alert.severity | enumLabel:'Severity' }}</span>
+              </td>
               <td>{{ alert.isResolved ? 'Resolved' : 'Open' }}</td>
               <td>
                 <button class="secondary" type="button" (click)="resolveAlert(alert)" [disabled]="alert.isResolved">Resolve</button>
@@ -61,21 +63,17 @@
             <option *ngFor="let collar of collars" [ngValue]="collar.id">{{ collar.serialNumber }}</option>
           </select>
         </label>
-        <label>
-          Created by user id
-          <input type="number" min="1" formControlName="createdByUserId" />
-        </label>
         <div class="form-row">
           <label>
             Type
             <select formControlName="alertType">
-              <option *ngFor="let option of alertTypeOptions" [value]="option">{{ option }}</option>
+              <option *ngFor="let option of alertTypeOptions" [value]="option">{{ option | enumLabel:'AlertType' }}</option>
             </select>
           </label>
           <label>
             Severity
             <select formControlName="severity">
-              <option *ngFor="let option of severityOptions" [value]="option">{{ option }}</option>
+              <option *ngFor="let option of severityOptions" [value]="option">{{ option | enumLabel:'Severity' }}</option>
             </select>
           </label>
         </div>

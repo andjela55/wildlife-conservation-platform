@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { finalize, forkJoin } from 'rxjs';
-import { Alert, Animal, Collar, LocationPoint, RangerReport } from '../../core/models/wildlife.models';
+import { Alert, Animal, Collar, LocationPoint, RangerReport, Severity } from '../../core/models/wildlife.models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
 import { LocationPointApiService } from '../../core/services/location-point-api.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
+import { enumEquals, enumKey } from '../../core/utils/enum-utils';
 
 @Component({
   selector: 'app-dashboard',
@@ -38,7 +39,7 @@ export class DashboardComponent implements OnInit {
   }
 
   get assignedCollarsCount(): number {
-    return this.collars.filter((collar) => collar.status === 'Assigned').length;
+    return this.collars.filter((collar) => enumEquals(collar.status, 'CollarStatus', 'Assigned')).length;
   }
 
   get unresolvedAlertsCount(): number {
@@ -46,7 +47,7 @@ export class DashboardComponent implements OnInit {
   }
 
   get criticalAlerts(): Alert[] {
-    return this.alerts.filter((alert) => !alert.isResolved && alert.severity === 'Critical').slice(0, 5);
+    return this.alerts.filter((alert) => !alert.isResolved && enumEquals(alert.severity, 'Severity', 'Critical')).slice(0, 5);
   }
 
   get recentAlerts(): Alert[] {
@@ -79,6 +80,14 @@ export class DashboardComponent implements OnInit {
     }
 
     return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
+  }
+
+  getSeverityIcon(severity: Severity): string {
+    return `assets/icons/alerts/alarm_${enumKey(severity, 'Severity').toLowerCase()}.svg`;
+  }
+
+  getSeverityClass(severity: Severity): string {
+    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   load(): void {

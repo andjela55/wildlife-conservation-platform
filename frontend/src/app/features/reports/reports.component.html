@@ -27,8 +27,8 @@
           <tbody>
             <tr *ngFor="let report of reports">
               <td>{{ getAnimalName(report.animalId) }}</td>
-              <td>{{ report.reportType }}</td>
-              <td><span class="pill" [class.medium]="report.severity === 'Medium'" [class.high]="report.severity === 'High'" [class.critical]="report.severity === 'Critical'">{{ report.severity }}</span></td>
+              <td>{{ report.reportType | enumLabel:'ReportType' }}</td>
+              <td><span class="pill" [ngClass]="getSeverityClass(report.severity)">{{ report.severity | enumLabel:'Severity' }}</span></td>
               <td>{{ report.createdAt | date:'short' }}</td>
               <td>{{ report.description }}</td>
             </tr>
@@ -50,21 +50,17 @@
             <option *ngFor="let animal of animals" [ngValue]="animal.id">{{ animal.name }}</option>
           </select>
         </label>
-        <label>
-          User id
-          <input type="number" min="1" formControlName="userId" />
-        </label>
         <div class="form-row">
           <label>
             Type
             <select formControlName="reportType">
-              <option *ngFor="let option of reportTypeOptions" [value]="option">{{ option }}</option>
+              <option *ngFor="let option of reportTypeOptions" [value]="option">{{ option | enumLabel:'ReportType' }}</option>
             </select>
           </label>
           <label>
             Severity
             <select formControlName="severity">
-              <option *ngFor="let option of severityOptions" [value]="option">{{ option }}</option>
+              <option *ngFor="let option of severityOptions" [value]="option">{{ option | enumLabel:'Severity' }}</option>
             </select>
           </label>
         </div>

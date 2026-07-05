@@ -11,12 +11,14 @@
   --leaf-100: #e9f3e6;
   --sun-500: #d99a28;
   --sun-100: #fff4dc;
-  --mist-50: #fbfaf4;
-  --mist-100: #f4f0e6;
+  --mist-50: #faf9f2;
+  --mist-100: #f3f0e5;
+  --ivory: #f3ead8;
+  --ivory-soft: #e6dcc9;
   --stone-500: #69756d;
   --ink: #1d2522;
   --line: rgba(45, 74, 64, 0.14);
-  --shadow: 0 18px 50px rgba(31, 52, 43, 0.09);
+  --shadow: 0 12px 30px rgba(31, 52, 43, 0.07);
 }
 
 html,
@@ -85,7 +87,7 @@ button {
 .table-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.82);
+  background: #ffffff;
   box-shadow: var(--shadow);
 }
 
@@ -105,17 +107,6 @@ button {
   position: relative;
   overflow: hidden;
   padding: 18px;
-}
-
-.metric::after {
-  content: "";
-  position: absolute;
-  right: -22px;
-  top: -30px;
-  width: 94px;
-  height: 94px;
-  border-radius: 50%;
-  background: rgba(217, 154, 40, 0.12);
 }
 
 .metric span {
@@ -156,7 +147,7 @@ textarea {
   width: 100%;
   border: 1px solid rgba(45, 74, 64, 0.18);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   color: var(--ink);
   padding: 9px 10px;
 }
@@ -194,8 +185,8 @@ textarea {
 button {
   border: 1px solid var(--forest-700);
   border-radius: 7px;
-  background: linear-gradient(180deg, #2f7a49, var(--forest-700));
-  color: #ffffff;
+  background: #2e7441;
+  color: var(--ivory);
   min-height: 38px;
   padding: 8px 13px;
   box-shadow: 0 10px 22px rgba(31, 93, 67, 0.14);

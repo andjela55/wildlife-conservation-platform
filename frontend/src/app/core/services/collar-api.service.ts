@@ -18,6 +18,10 @@ export class CollarApiService extends BaseApiService<Collar, CreateCollarRequest
     return this.http.post<CollarAssignment>(this.assignmentsUrl, request);
   }
 
+  getActiveAssignments(): Observable<CollarAssignment[]> {
+    return this.http.get<CollarAssignment[]>(`${this.assignmentsUrl}/active`);
+  }
+
   unassign(id: number, request: UnassignCollarRequest): Observable<CollarAssignment> {
     return this.http.put<CollarAssignment>(`${this.assignmentsUrl}/${id}/unassign`, request);
   }

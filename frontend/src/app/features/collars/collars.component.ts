@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
-import { Animal, Collar, collarStatusOptions } from '../../core/models/wildlife.models';
+import { Animal, Collar, CollarAssignment, collarStatusOptions } from '../../core/models/wildlife.models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
@@ -14,6 +14,7 @@ import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/u
 export class CollarsComponent implements OnInit {
   collars: Collar[] = [];
   animals: Animal[] = [];
+  activeAssignments: CollarAssignment[] = [];
   collarStatusOptions = collarStatusOptions;
   isLoading = false;
   errorMessage = '';
@@ -58,18 +59,33 @@ export class CollarsComponent implements OnInit {
 
     forkJoin({
       collars: this.collarApi.getAll(),
-      animals: this.animalApi.getAll()
+      animals: this.animalApi.getAll(),
+      activeAssignments: this.collarApi.getActiveAssignments()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (result) => {
           this.collars = result.collars;
           this.animals = result.animals;
+          this.activeAssignments = result.activeAssignments;
         },
         error: () => {
           this.errorMessage = 'Unable to load collars.';
         }
       });
+  }
+
+  getAnimalName(animalId: number): string {
+    return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
+  }
+
+  getCollarSerial(collarId: number): string {
+    return this.collars.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
+  }
+
+  getAssignmentLabel(assignment: CollarAssignment): string {
+    const assignedAt = new Date(assignment.assignedAt).toLocaleString();
+    return `${this.getAnimalName(assignment.animalId)} - ${this.getCollarSerial(assignment.collarId)} - ${assignedAt}`;
   }
 
   createCollar(): void {

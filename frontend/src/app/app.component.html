@@ -1,25 +1,38 @@
-<div class="app-shell">
+<div class="app-shell" [class.sidebar-collapsed]="isSidebarCollapsed">
   <aside class="sidebar">
     <div class="brand">
-      <img class="brand-mark" src="assets/wildtrack-mark.svg" alt="" />
-      <span>
+      <img class="brand-mark" src="assets/logo/logo_light-blank.svg" alt="WildTrack" />
+      <span class="brand-text">
         <strong>WildTrack</strong>
-        <small>Conservation Platform</small>
       </span>
+      <button
+        class="collapse-button"
+        [class.is-collapsed]="isSidebarCollapsed"
+        type="button"
+        [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        (click)="toggleSidebar()"
+      ></button>
     </div>
 
     <nav class="nav-list" aria-label="Primary navigation">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span></span>Dashboard</a>
-      <a routerLink="/species" routerLinkActive="active"><span></span>Species</a>
-      <a routerLink="/animals" routerLinkActive="active"><span></span>Animals</a>
-      <a routerLink="/collars" routerLinkActive="active"><span></span>Collars</a>
-      <a routerLink="/reports" routerLinkActive="active"><span></span>Reports</a>
-      <a routerLink="/alerts" routerLinkActive="active"><span></span>Alerts</a>
+      <a
+        *ngFor="let item of navigationItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.exact === true }"
+        [attr.title]="isSidebarCollapsed ? item.label : null"
+      >
+        <img class="nav-icon" [src]="item.icon" alt="" />
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
     </nav>
 
     <div class="sidebar-note">
-      <span>Field Network</span>
-      <strong>Track Protect Conserve</strong>
+      <div class="ranger-avatar">RA</div>
+      <div>
+        <strong>Ranger Alex</strong>
+        <span>Field Ranger</span>
+      </div>
     </div>
   </aside>
 
@@ -29,7 +42,7 @@
         <span>Search</span>
         <input type="search" placeholder="Animals, collars, reports..." />
       </label>
-      <div class="status-chip">Live habitat data</div>
+      <button class="notification-button" type="button" aria-label="Notifications"></button>
     </div>
 
     <div class="content-surface">

@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
-import { Animal, RangerReport, reportTypeOptions, severityOptions } from '../../core/models/wildlife.models';
+import { Animal, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models/wildlife.models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
+import { CurrentUserService } from '../../core/services/current-user.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
+import { enumKey } from '../../core/utils/enum-utils';
 
 @Component({
   selector: 'app-reports',
@@ -22,7 +24,6 @@ export class ReportsComponent implements OnInit {
 
   reportForm = this.fb.group({
     animalId: [null],
-    userId: [1, [Validators.required, Validators.min(1)]],
     reportType: ['Sighting', Validators.required],
     severity: ['Low', Validators.required],
     latitude: [0, [Validators.required, Validators.min(-90), Validators.max(90)]],
@@ -34,6 +35,7 @@ export class ReportsComponent implements OnInit {
   constructor(
     private readonly rangerReportApi: RangerReportApiService,
     private readonly animalApi: AnimalApiService,
+    private readonly currentUser: CurrentUserService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -47,6 +49,10 @@ export class ReportsComponent implements OnInit {
     }
 
     return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
+  }
+
+  getSeverityClass(severity: Severity): string {
+    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   load(): void {
@@ -79,7 +85,7 @@ export class ReportsComponent implements OnInit {
     this.rangerReportApi
       .create({
         animalId: value.animalId || null,
-        userId: value.userId,
+        userId: this.currentUser.userId,
         reportType: value.reportType,
         severity: value.severity,
         latitude: value.latitude,
@@ -92,7 +98,6 @@ export class ReportsComponent implements OnInit {
           this.successMessage = 'Ranger report created.';
           this.reportForm.reset({
             animalId: null,
-            userId: 1,
             reportType: 'Sighting',
             severity: 'Low',
             latitude: 0,

@@ -5,17 +5,13 @@ import {
     Alert,
     Animal,
     animalSexOptions,
-    Collar,
     LocationPoint,
     RangerReport,
-    signalTypeOptions,
     Subspecies
 } from '../../core/models/wildlife.models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
-import { CollarApiService } from '../../core/services/collar-api.service';
-import { LocationPointApiService } from '../../core/services/location-point-api.service';
 import { SubspeciesApiService } from '../../core/services/subspecies-api.service';
-import { localDateInputToIso, localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
+import { localDateInputToIso } from '../../core/utils/date-utils';
 
 @Component({
   selector: 'app-animals',
@@ -25,13 +21,11 @@ import { localDateInputToIso, localDateTimeInputToIso, toLocalDateTimeInputValue
 export class AnimalsComponent implements OnInit {
   animals: Animal[] = [];
   subspecies: Subspecies[] = [];
-  collars: Collar[] = [];
   selectedAnimal: Animal | null = null;
   selectedLocations: LocationPoint[] = [];
   selectedReports: RangerReport[] = [];
   selectedAlerts: Alert[] = [];
   animalSexOptions = animalSexOptions;
-  signalTypeOptions = signalTypeOptions;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -45,22 +39,9 @@ export class AnimalsComponent implements OnInit {
     isActive: [true]
   });
 
-  locationForm = this.fb.group({
-    animalId: [null, [Validators.required, Validators.min(1)]],
-    collarId: [null, [Validators.required, Validators.min(1)]],
-    latitude: [0, [Validators.required, Validators.min(-90), Validators.max(90)]],
-    longitude: [0, [Validators.required, Validators.min(-180), Validators.max(180)]],
-    altitude: [null],
-    recordedAt: [toLocalDateTimeInputValue(), Validators.required],
-    signalType: ['Manual', Validators.required],
-    notes: ['', Validators.maxLength(1000)]
-  });
-
   constructor(
     private readonly animalApi: AnimalApiService,
     private readonly subspeciesApi: SubspeciesApiService,
-    private readonly collarApi: CollarApiService,
-    private readonly locationPointApi: LocationPointApiService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -78,15 +59,13 @@ export class AnimalsComponent implements OnInit {
 
     forkJoin({
       animals: this.animalApi.getAll(),
-      subspecies: this.subspeciesApi.getAll(),
-      collars: this.collarApi.getAll()
+      subspecies: this.subspeciesApi.getAll()
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (result) => {
           this.animals = result.animals;
           this.subspecies = result.subspecies;
-          this.collars = result.collars;
           if (!this.selectedAnimal && this.animals.length) {
             this.selectAnimal(this.animals[0]);
           }
@@ -99,7 +78,6 @@ export class AnimalsComponent implements OnInit {
 
   selectAnimal(animal: Animal): void {
     this.selectedAnimal = animal;
-    this.locationForm.patchValue({ animalId: animal.id });
     forkJoin({
       locations: this.animalApi.getLocations(animal.id),
       reports: this.animalApi.getReports(animal.id),
@@ -145,43 +123,4 @@ export class AnimalsComponent implements OnInit {
       });
   }
 
-  createLocationPoint(): void {
-    if (this.locationForm.invalid) {
-      this.locationForm.markAllAsTouched();
-      return;
-    }
-
-    const value = this.locationForm.getRawValue();
-    this.locationPointApi
-      .create({
-        animalId: value.animalId,
-        collarId: value.collarId,
-        latitude: value.latitude,
-        longitude: value.longitude,
-        altitude: value.altitude || null,
-        recordedAt: localDateTimeInputToIso(value.recordedAt),
-        signalType: value.signalType,
-        notes: value.notes || null
-      })
-      .subscribe({
-        next: () => {
-          this.successMessage = 'Location point created.';
-          this.locationForm.reset({
-            animalId: this.selectedAnimal?.id ?? null,
-            collarId: null,
-            latitude: 0,
-            longitude: 0,
-            altitude: null,
-            recordedAt: toLocalDateTimeInputValue(),
-            signalType: 'Manual'
-          });
-          if (this.selectedAnimal) {
-            this.selectAnimal(this.selectedAnimal);
-          }
-        },
-        error: () => {
-          this.errorMessage = 'Unable to create location point.';
-        }
-      });
-  }
 }

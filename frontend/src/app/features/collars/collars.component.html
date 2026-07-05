@@ -25,10 +25,10 @@
           </thead>
           <tbody>
             <tr *ngFor="let collar of collars">
-              <td>#{{ collar.id }} {{ collar.serialNumber }}</td>
+              <td>{{ collar.serialNumber }}</td>
               <td>{{ collar.model || '-' }}</td>
               <td>{{ collar.manufacturer || '-' }}</td>
-              <td><span class="pill">{{ collar.status }}</span></td>
+              <td><span class="pill">{{ collar.status | enumLabel:'CollarStatus' }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -58,7 +58,7 @@
         <label>
           Status
           <select formControlName="status">
-            <option *ngFor="let option of collarStatusOptions" [value]="option">{{ option }}</option>
+            <option *ngFor="let option of collarStatusOptions" [value]="option">{{ option | enumLabel:'CollarStatus' }}</option>
           </select>
         </label>
         <label>
@@ -104,8 +104,13 @@
       <h2 class="section-spacer">Unassign Collar</h2>
       <form class="form-grid" [formGroup]="unassignForm" (ngSubmit)="unassignCollar()">
         <label>
-          Assignment id
-          <input type="number" min="1" formControlName="assignmentId" />
+          Active assignment
+          <select formControlName="assignmentId">
+            <option [ngValue]="null">Select active assignment</option>
+            <option *ngFor="let assignment of activeAssignments" [ngValue]="assignment.id">
+              {{ getAssignmentLabel(assignment) }}
+            </option>
+          </select>
         </label>
         <label>
           Unassigned at

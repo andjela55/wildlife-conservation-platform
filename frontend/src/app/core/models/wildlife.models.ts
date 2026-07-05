@@ -1,7 +1,12 @@
-export type AnimalSex = 'Unknown' | 'Male' | 'Female';
-export type CollarStatus = 'Available' | 'Assigned' | 'Inactive' | 'Lost' | 'Damaged';
-export type SignalType = 'Cellular' | 'Satellite' | 'LoRaWAN' | 'Manual' | 'Simulator';
-export type ReportType =
+export type ApiEnum<T extends string> = T | number;
+
+export type AnimalSexKey = 'Unknown' | 'Male' | 'Female';
+export type AnimalSex = ApiEnum<AnimalSexKey>;
+export type CollarStatusKey = 'Available' | 'Assigned' | 'Inactive' | 'Lost' | 'Damaged';
+export type CollarStatus = ApiEnum<CollarStatusKey>;
+export type SignalTypeKey = 'Cellular' | 'Satellite' | 'LoRaWAN' | 'Manual' | 'Simulator';
+export type SignalType = ApiEnum<SignalTypeKey>;
+export type ReportTypeKey =
   | 'Sighting'
   | 'Injury'
   | 'CollarIssue'
@@ -9,14 +14,17 @@ export type ReportType =
   | 'HabitatIssue'
   | 'Emergency'
   | 'Other';
-export type Severity = 'Low' | 'Medium' | 'High' | 'Critical';
-export type AlertType =
+export type ReportType = ApiEnum<ReportTypeKey>;
+export type SeverityKey = 'Low' | 'Medium' | 'High' | 'Critical';
+export type Severity = ApiEnum<SeverityKey>;
+export type AlertTypeKey =
   | 'NoMovement'
   | 'LeftSafeZone'
   | 'CollarBatteryLow'
   | 'CollarSignalLost'
   | 'Manual'
   | 'Other';
+export type AlertType = ApiEnum<AlertTypeKey>;
 
 export interface Species {
   id: number;
@@ -118,17 +126,6 @@ export interface LocationPoint {
   notes: string | null;
 }
 
-export interface CreateLocationPointRequest {
-  animalId: number;
-  collarId: number;
-  latitude: number;
-  longitude: number;
-  altitude: number | null;
-  recordedAt: string;
-  signalType: SignalType;
-  notes: string | null;
-}
-
 export interface RangerReport {
   id: number;
   animalId: number | null;
@@ -179,10 +176,9 @@ export interface ResolveAlertRequest {
   resolvedAt: string | null;
 }
 
-export const animalSexOptions: AnimalSex[] = ['Unknown', 'Male', 'Female'];
-export const collarStatusOptions: CollarStatus[] = ['Available', 'Assigned', 'Inactive', 'Lost', 'Damaged'];
-export const signalTypeOptions: SignalType[] = ['Cellular', 'Satellite', 'LoRaWAN', 'Manual', 'Simulator'];
-export const reportTypeOptions: ReportType[] = [
+export const animalSexOptions: AnimalSexKey[] = ['Unknown', 'Male', 'Female'];
+export const collarStatusOptions: CollarStatusKey[] = ['Available', 'Assigned', 'Inactive', 'Lost', 'Damaged'];
+export const reportTypeOptions: ReportTypeKey[] = [
   'Sighting',
   'Injury',
   'CollarIssue',
@@ -191,8 +187,8 @@ export const reportTypeOptions: ReportType[] = [
   'Emergency',
   'Other'
 ];
-export const severityOptions: Severity[] = ['Low', 'Medium', 'High', 'Critical'];
-export const alertTypeOptions: AlertType[] = [
+export const severityOptions: SeverityKey[] = ['Low', 'Medium', 'High', 'Critical'];
+export const alertTypeOptions: AlertTypeKey[] = [
   'NoMovement',
   'LeftSafeZone',
   'CollarBatteryLow',

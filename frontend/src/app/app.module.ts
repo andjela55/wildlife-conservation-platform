@@ -11,6 +11,7 @@ import { AnimalsComponent } from './features/animals/animals.component';
 import { CollarsComponent } from './features/collars/collars.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { AlertsComponent } from './features/alerts/alerts.component';
+import { EnumLabelPipe } from './core/pipes/enum-label.pipe';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { AlertsComponent } from './features/alerts/alerts.component';
     AnimalsComponent,
     CollarsComponent,
     ReportsComponent,
-    AlertsComponent
+    AlertsComponent,
+    EnumLabelPipe
   ],
   imports: [
     BrowserModule,
