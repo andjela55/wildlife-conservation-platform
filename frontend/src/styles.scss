@@ -1,3 +1,33 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$wildlife-primary: mat.define-palette(mat.$green-palette, 900, 700, 900);
+$wildlife-accent: mat.define-palette(mat.$amber-palette, 800, 600, 900);
+$wildlife-warn: mat.define-palette(mat.$red-palette, 700);
+
+$wildlife-theme: mat.define-light-theme((
+  color: (
+    primary: $wildlife-primary,
+    accent: $wildlife-accent,
+    warn: $wildlife-warn,
+  )
+));
+
+:root {
+  --color-forest: #174230;
+  --color-deep-forest: #143326;
+  --color-moss: #365129;
+  --color-sand: #f4efe3;
+  --color-cream: #fbf8ef;
+  --color-earth: #c77d3a;
+  --color-danger: #a4473f;
+  --color-text: #26332d;
+  --color-muted: #6b756f;
+  --color-border: rgba(31, 77, 58, 0.16);
+}
+
+@include mat.all-component-themes($wildlife-theme);
 * {
   box-sizing: border-box;
 }
@@ -127,6 +157,26 @@ button {
   gap: 12px;
 }
 
+mat-form-field {
+  width: 100%;
+}
+
+.mat-mdc-table {
+  width: 100%;
+  background: transparent;
+}
+
+.mat-mdc-header-cell {
+  color: var(--stone-500);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tab-form {
+  padding-top: 18px;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -141,9 +191,9 @@ label {
   font-weight: 700;
 }
 
-input,
+input:not(.mat-mdc-input-element),
 select,
-textarea {
+textarea:not(.mat-mdc-input-element) {
   width: 100%;
   border: 1px solid rgba(45, 74, 64, 0.18);
   border-radius: 6px;
@@ -152,9 +202,9 @@ textarea {
   padding: 9px 10px;
 }
 
-input:focus,
+input:not(.mat-mdc-input-element):focus,
 select:focus,
-textarea:focus {
+textarea:not(.mat-mdc-input-element):focus {
   border-color: rgba(31, 93, 67, 0.55);
   box-shadow: 0 0 0 3px rgba(31, 93, 67, 0.1);
   outline: none;
@@ -182,7 +232,7 @@ textarea {
 }
 
 .button,
-button {
+button:not(.mat-mdc-button-base) {
   border: 1px solid var(--forest-700);
   border-radius: 7px;
   background: #2e7441;
@@ -193,14 +243,14 @@ button {
 }
 
 .button.secondary,
-button.secondary {
+button.secondary:not(.mat-mdc-button-base) {
   background: rgba(255, 255, 255, 0.9);
   color: var(--forest-700);
   box-shadow: none;
 }
 
 .button:disabled,
-button:disabled {
+button:disabled:not(.mat-mdc-button-base) {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -325,7 +375,7 @@ th {
   }
 
   .button,
-  button {
+  button:not(.mat-mdc-button-base) {
     width: 100%;
   }
 }

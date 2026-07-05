@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -12,6 +13,7 @@ import { CollarsComponent } from './features/collars/collars.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { AlertsComponent } from './features/alerts/alerts.component';
 import { EnumLabelPipe } from './core/pipes/enum-label.pipe';
+import { MaterialModule } from './material.module';
 
 @NgModule({
   declarations: [
@@ -26,8 +28,10 @@ import { EnumLabelPipe } from './core/pipes/enum-label.pipe';
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     HttpClientModule,
     ReactiveFormsModule,
+    MaterialModule,
     AppRoutingModule
   ],
   providers: [],

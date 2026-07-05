@@ -310,6 +310,14 @@
   display: grid;
 }
 
+.quick-actions a:hover {
+  color: #23733d;
+  border: 1px solid #23733d;
+  border-radius: 12px;
+  background-color: #f2f8f4;
+  transform: translateY(-1px);
+}
+
 .status-item,
 .report-item,
 .animal-item {

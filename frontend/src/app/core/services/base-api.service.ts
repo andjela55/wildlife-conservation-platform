@@ -14,8 +14,8 @@ export abstract class BaseApiService<T, TCreate, TUpdate = TCreate> {
 
   constructor(protected readonly http: HttpClient) {}
 
-  getAll(): Observable<T[]> {
-    return this.http.get<T[]>(this.baseUrl);
+  getAll(): Observable<Array<T>> {
+    return this.http.get<Array<T>>(this.baseUrl);
   }
 
   create(request: TCreate): Observable<T> {

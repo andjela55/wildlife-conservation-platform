@@ -4,7 +4,7 @@
       <h1>Animals</h1>
       <p>Animal registry with location, report, and alert history.</p>
     </div>
-    <button class="secondary" type="button" (click)="load()" [disabled]="isLoading">Refresh</button>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="isLoading">Refresh</button>
   </header>
 
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
@@ -14,28 +14,31 @@
     <section class="table-panel">
       <h2>Animal Registry</h2>
       <div class="table-wrap" *ngIf="animals.length; else noAnimals">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Subspecies</th>
-              <th>Sex</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="selectable-row"
-              *ngFor="let animal of animals"
-              [class.selected]="selectedAnimal?.id === animal.id"
-              (click)="selectAnimal(animal)"
-            >
-              <td>{{ animal.name }}</td>
-              <td>{{ getSubspeciesName(animal.subspeciesId) }}</td>
-              <td>{{ animal.sex | enumLabel:'AnimalSex' }}</td>
-              <td><span class="pill">{{ animal.isActive ? 'Active' : 'Inactive' }}</span></td>
-            </tr>
-          </tbody>
+        <table mat-table [dataSource]="animals">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let animal">{{ animal.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="subspecies">
+            <th mat-header-cell *matHeaderCellDef>Subspecies</th>
+            <td mat-cell *matCellDef="let animal">{{ getSubspeciesName(animal.subspeciesId) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="sex">
+            <th mat-header-cell *matHeaderCellDef>Sex</th>
+            <td mat-cell *matCellDef="let animal">{{ animal.sex | enumLabel:'AnimalSex' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let animal"><span class="pill">{{ animal.isActive ? 'Active' : 'Inactive' }}</span></td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="animalColumns"></tr>
+          <tr
+            mat-row
+            class="selectable-row"
+            *matRowDef="let animal; columns: animalColumns"
+            [class.selected]="selectedAnimal?.id === animal.id"
+            (click)="selectAnimal(animal)"
+          ></tr>
         </table>
       </div>
       <ng-template #noAnimals>
@@ -60,21 +63,21 @@
         </div>
 
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Latest coordinates</th>
-                <th>Recorded</th>
-                <th>Signal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let point of selectedLocations | slice:0:5">
-                <td>{{ point.latitude }}, {{ point.longitude }}</td>
-                <td>{{ point.recordedAt | date:'short' }}</td>
-                <td>{{ point.signalType | enumLabel:'SignalType' }}</td>
-              </tr>
-            </tbody>
+          <table mat-table [dataSource]="selectedLocations | slice:0:5">
+            <ng-container matColumnDef="coordinates">
+              <th mat-header-cell *matHeaderCellDef>Latest coordinates</th>
+              <td mat-cell *matCellDef="let point">{{ point.latitude }}, {{ point.longitude }}</td>
+            </ng-container>
+            <ng-container matColumnDef="recordedAt">
+              <th mat-header-cell *matHeaderCellDef>Recorded</th>
+              <td mat-cell *matCellDef="let point">{{ point.recordedAt | date:'short' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="signalType">
+              <th mat-header-cell *matHeaderCellDef>Signal</th>
+              <td mat-cell *matCellDef="let point">{{ point.signalType | enumLabel:'SignalType' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="locationColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: locationColumns"></tr>
           </table>
         </div>
       </section>
@@ -83,38 +86,35 @@
     <section class="panel">
       <h2>Create Animal</h2>
       <form class="form-grid" [formGroup]="animalForm" (ngSubmit)="createAnimal()">
-        <label>
-          Name
-          <input formControlName="name" maxlength="120" />
-        </label>
-        <label>
-          Subspecies
-          <select formControlName="subspeciesId">
-            <option [ngValue]="null">Select subspecies</option>
-            <option *ngFor="let item of subspecies" [ngValue]="item.id">{{ item.name }}</option>
-          </select>
-        </label>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="120" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Subspecies</mat-label>
+          <mat-select formControlName="subspeciesId">
+            <mat-option [value]="null">Select subspecies</mat-option>
+            <mat-option *ngFor="let item of subspecies" [value]="item.id">{{ item.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
         <div class="form-row">
-          <label>
-            Sex
-            <select formControlName="sex">
-              <option *ngFor="let option of animalSexOptions" [value]="option">{{ option | enumLabel:'AnimalSex' }}</option>
-            </select>
-          </label>
-          <label>
-            Date of birth
-            <input type="date" formControlName="dateOfBirth" />
-          </label>
+          <mat-form-field appearance="outline">
+            <mat-label>Sex</mat-label>
+            <mat-select formControlName="sex">
+              <mat-option *ngFor="let option of animalSexOptions" [value]="option">{{ option | enumLabel:'AnimalSex' }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Date of birth</mat-label>
+            <input matInput type="date" formControlName="dateOfBirth" />
+          </mat-form-field>
         </div>
-        <label>
-          Notes
-          <textarea formControlName="notes" maxlength="1000"></textarea>
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="isActive" />
-          Active
-        </label>
-        <button type="submit">Create animal</button>
+        <mat-form-field appearance="outline">
+          <mat-label>Notes</mat-label>
+          <textarea matInput formControlName="notes" maxlength="1000"></textarea>
+        </mat-form-field>
+        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+        <button mat-raised-button color="primary" type="submit">Create animal</button>
       </form>
 
       <div class="message success section-spacer">

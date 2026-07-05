@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { finalize, forkJoin } from 'rxjs';
-import { Alert, Animal, Collar, LocationPoint, RangerReport, Severity } from '../../core/models/wildlife.models';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
+import { Alert, Animal, Collar, LocationPoint, RangerReport, Severity } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
@@ -13,14 +13,15 @@ import { enumEquals, enumKey } from '../../core/utils/enum-utils';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
-  animals: Animal[] = [];
-  collars: Collar[] = [];
-  latestLocations: LocationPoint[] = [];
-  reports: RangerReport[] = [];
-  alerts: Alert[] = [];
+export class DashboardComponent implements OnInit, OnDestroy {
+  animals: Array<Animal> = [];
+  collars: Array<Collar> = [];
+  latestLocations: Array<LocationPoint> = [];
+  reports: Array<RangerReport> = [];
+  alerts: Array<Alert> = [];
   isLoading = false;
   errorMessage = '';
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly animalApi: AnimalApiService,
@@ -31,7 +32,12 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get activeAnimalsCount(): number {
@@ -46,23 +52,23 @@ export class DashboardComponent implements OnInit {
     return this.alerts.filter((alert) => !alert.isResolved).length;
   }
 
-  get criticalAlerts(): Alert[] {
+  get criticalAlerts(): Array<Alert> {
     return this.alerts.filter((alert) => !alert.isResolved && enumEquals(alert.severity, 'Severity', 'Critical')).slice(0, 5);
   }
 
-  get recentAlerts(): Alert[] {
+  get recentAlerts(): Array<Alert> {
     return this.alerts.filter((alert) => !alert.isResolved).slice(0, 3);
   }
 
-  get recentReports(): RangerReport[] {
+  get recentReports(): Array<RangerReport> {
     return this.reports.slice(0, 3);
   }
 
-  get topAnimals(): Animal[] {
+  get topAnimals(): Array<Animal> {
     return this.animals.filter((animal) => animal.isActive).slice(0, 4);
   }
 
-  get mapLocations(): LocationPoint[] {
+  get mapLocations(): Array<LocationPoint> {
     return this.latestLocations.slice(0, 6);
   }
 
@@ -90,29 +96,38 @@ export class DashboardComponent implements OnInit {
     return enumKey(severity, 'Severity').toLowerCase();
   }
 
-  load(): void {
+  loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
-    forkJoin({
+    return forkJoin({
       animals: this.animalApi.getAll(),
       collars: this.collarApi.getAll(),
       latestLocations: this.locationPointApi.getLatest(),
       reports: this.rangerReportApi.getAll(),
       alerts: this.alertApi.getAll()
     })
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (result) => {
-          this.animals = result.animals;
-          this.collars = result.collars;
-          this.latestLocations = result.latestLocations;
-          this.reports = result.reports;
-          this.alerts = result.alerts;
-        },
-        error: () => {
+      .pipe(
+        map((result) => this.mapLoadData(result)),
+        catchError(() => {
           this.errorMessage = 'Unable to load dashboard data.';
-        }
-      });
+          return of(void 0);
+        }),
+        finalize(() => (this.isLoading = false))
+      );
+  }
+
+  private mapLoadData(result: {
+    animals: Array<Animal>;
+    collars: Array<Collar>;
+    latestLocations: Array<LocationPoint>;
+    reports: Array<RangerReport>;
+    alerts: Array<Alert>;
+  }): void {
+    this.animals = result.animals;
+    this.collars = result.collars;
+    this.latestLocations = result.latestLocations;
+    this.reports = result.reports;
+    this.alerts = result.alerts;
   }
 }

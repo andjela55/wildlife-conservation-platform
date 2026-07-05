@@ -7,7 +7,7 @@ export type EnumName =
   | 'AlertType'
   | 'UserRole';
 
-const enumValues: Record<EnumName, string[]> = {
+const enumValues: Record<EnumName, Array<string>> = {
   AnimalSex: ['Unknown', 'Male', 'Female'],
   CollarStatus: ['Available', 'Assigned', 'Inactive', 'Lost', 'Damaged'],
   SignalType: ['Cellular', 'Satellite', 'LoRaWAN', 'Manual', 'Simulator'],

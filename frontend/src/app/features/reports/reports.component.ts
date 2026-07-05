@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
-import { Animal, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models/wildlife.models';
+import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
+import { Animal, CreateRangerReportRequest, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CurrentUserService } from '../../core/services/current-user.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
@@ -13,14 +13,16 @@ import { enumKey } from '../../core/utils/enum-utils';
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss']
 })
-export class ReportsComponent implements OnInit {
-  reports: RangerReport[] = [];
-  animals: Animal[] = [];
+export class ReportsComponent implements OnInit, OnDestroy {
+  reports: Array<RangerReport> = [];
+  animals: Array<Animal> = [];
+  reportColumns: Array<string> = ['subject', 'type', 'severity', 'createdAt', 'description'];
   reportTypeOptions = reportTypeOptions;
   severityOptions = severityOptions;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  private readonly destroy$ = new Subject<void>();
 
   reportForm = this.fb.group({
     animalId: [null],
@@ -40,7 +42,12 @@ export class ReportsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getAnimalName(animalId: number | null): string {
@@ -55,24 +62,26 @@ export class ReportsComponent implements OnInit {
     return enumKey(severity, 'Severity').toLowerCase();
   }
 
-  load(): void {
+  refresh(): void {
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
-    forkJoin({
+    return forkJoin({
       reports: this.rangerReportApi.getAll(),
       animals: this.animalApi.getAll()
     })
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (result) => {
-          this.reports = result.reports;
-          this.animals = result.animals;
-        },
-        error: () => {
+      .pipe(
+        map((result) => this.mapLoadData(result)),
+        catchError(() => {
           this.errorMessage = 'Unable to load ranger reports.';
-        }
-      });
+          return of(void 0);
+        }),
+        finalize(() => (this.isLoading = false))
+      );
   }
 
   createReport(): void {
@@ -81,18 +90,9 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
-    const value = this.reportForm.getRawValue();
     this.rangerReportApi
-      .create({
-        animalId: value.animalId || null,
-        userId: this.currentUser.userId,
-        reportType: value.reportType,
-        severity: value.severity,
-        latitude: value.latitude,
-        longitude: value.longitude,
-        description: value.description,
-        createdAt: localDateTimeInputToIso(value.createdAt)
-      })
+      .create(this.mapCreateReportRequest())
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.successMessage = 'Ranger report created.';
@@ -104,11 +104,30 @@ export class ReportsComponent implements OnInit {
             longitude: 0,
             createdAt: toLocalDateTimeInputValue()
           });
-          this.load();
+          this.refresh();
         },
         error: () => {
           this.errorMessage = 'Unable to create ranger report.';
         }
       });
+  }
+
+  private mapLoadData(result: { reports: Array<RangerReport>; animals: Array<Animal> }): void {
+    this.reports = result.reports;
+    this.animals = result.animals;
+  }
+
+  private mapCreateReportRequest(): CreateRangerReportRequest {
+    const value = this.reportForm.getRawValue();
+    return {
+      animalId: value.animalId || null,
+      userId: this.currentUser.userId,
+      reportType: value.reportType,
+      severity: value.severity,
+      latitude: value.latitude,
+      longitude: value.longitude,
+      description: value.description,
+      createdAt: localDateTimeInputToIso(value.createdAt)
+    };
   }
 }

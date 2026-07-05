@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { CreateRangerReportRequest, RangerReport } from '../models/wildlife.models';
+import { CreateRangerReportRequest, RangerReport } from '../models';
 import { BaseApiService } from './base-api.service';
 
 @Injectable({ providedIn: 'root' })

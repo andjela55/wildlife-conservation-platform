@@ -4,7 +4,7 @@
       <h1>Collars</h1>
       <p>Collar inventory and assignment operations.</p>
     </div>
-    <button class="secondary" type="button" (click)="load()" [disabled]="isLoading">Refresh</button>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="isLoading">Refresh</button>
   </header>
 
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
@@ -14,23 +14,25 @@
     <section class="table-panel">
       <h2>Collar Inventory</h2>
       <div class="table-wrap" *ngIf="collars.length; else noCollars">
-        <table>
-          <thead>
-            <tr>
-              <th>Serial</th>
-              <th>Model</th>
-              <th>Manufacturer</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let collar of collars">
-              <td>{{ collar.serialNumber }}</td>
-              <td>{{ collar.model || '-' }}</td>
-              <td>{{ collar.manufacturer || '-' }}</td>
-              <td><span class="pill">{{ collar.status | enumLabel:'CollarStatus' }}</span></td>
-            </tr>
-          </tbody>
+        <table mat-table [dataSource]="collars">
+          <ng-container matColumnDef="serialNumber">
+            <th mat-header-cell *matHeaderCellDef>Serial</th>
+            <td mat-cell *matCellDef="let collar">{{ collar.serialNumber }}</td>
+          </ng-container>
+          <ng-container matColumnDef="model">
+            <th mat-header-cell *matHeaderCellDef>Model</th>
+            <td mat-cell *matCellDef="let collar">{{ collar.model || '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="manufacturer">
+            <th mat-header-cell *matHeaderCellDef>Manufacturer</th>
+            <td mat-cell *matCellDef="let collar">{{ collar.manufacturer || '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let collar"><span class="pill">{{ collar.status | enumLabel:'CollarStatus' }}</span></td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="collarColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: collarColumns"></tr>
         </table>
       </div>
       <ng-template #noCollars>
@@ -38,94 +40,99 @@
       </ng-template>
     </section>
 
-    <section class="panel">
-      <h2>Create Collar</h2>
-      <form class="form-grid" [formGroup]="collarForm" (ngSubmit)="createCollar()">
-        <label>
-          Serial number
-          <input formControlName="serialNumber" maxlength="120" />
-        </label>
-        <div class="form-row">
-          <label>
-            Model
-            <input formControlName="model" maxlength="120" />
-          </label>
-          <label>
-            Manufacturer
-            <input formControlName="manufacturer" maxlength="120" />
-          </label>
-        </div>
-        <label>
-          Status
-          <select formControlName="status">
-            <option *ngFor="let option of collarStatusOptions" [value]="option">{{ option | enumLabel:'CollarStatus' }}</option>
-          </select>
-        </label>
-        <label>
-          Notes
-          <textarea formControlName="notes" maxlength="1000"></textarea>
-        </label>
-        <button type="submit">Create collar</button>
-      </form>
+    <section class="panel workflow-panel">
+      <mat-tab-group [mat-stretch-tabs]="false">
+        <mat-tab label="Create">
+          <form class="form-grid tab-form" [formGroup]="collarForm" (ngSubmit)="createCollar()">
+            <mat-form-field appearance="outline">
+              <mat-label>Serial number</mat-label>
+              <input matInput formControlName="serialNumber" maxlength="120" />
+            </mat-form-field>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Model</mat-label>
+                <input matInput formControlName="model" maxlength="120" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Manufacturer</mat-label>
+                <input matInput formControlName="manufacturer" maxlength="120" />
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let option of collarStatusOptions" [value]="option">{{ option | enumLabel:'CollarStatus' }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" maxlength="1000"></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit">Create collar</button>
+          </form>
+        </mat-tab>
 
-      <h2 class="section-spacer">Assign Collar</h2>
-      <form class="form-grid" [formGroup]="assignmentForm" (ngSubmit)="assignCollar()">
-        <div class="form-row">
-          <label>
-            Animal
-            <select formControlName="animalId">
-              <option [ngValue]="null">Select animal</option>
-              <option *ngFor="let animal of animals" [ngValue]="animal.id">{{ animal.name }}</option>
-            </select>
-          </label>
-          <label>
-            Collar
-            <select formControlName="collarId">
-              <option [ngValue]="null">Select collar</option>
-              <option *ngFor="let collar of collars" [ngValue]="collar.id">{{ collar.serialNumber }}</option>
-            </select>
-          </label>
-        </div>
-        <label>
-          Assigned at
-          <input type="datetime-local" formControlName="assignedAt" />
-        </label>
-        <label>
-          Reason
-          <input formControlName="reason" maxlength="250" />
-        </label>
-        <label>
-          Notes
-          <textarea formControlName="notes" maxlength="1000"></textarea>
-        </label>
-        <button type="submit">Assign collar</button>
-      </form>
+        <mat-tab label="Assign">
+          <form class="form-grid tab-form" [formGroup]="assignmentForm" (ngSubmit)="assignCollar()">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Animal</mat-label>
+                <mat-select formControlName="animalId">
+                  <mat-option [value]="null">Select animal</mat-option>
+                  <mat-option *ngFor="let animal of animals" [value]="animal.id">{{ animal.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Collar</mat-label>
+                <mat-select formControlName="collarId">
+                  <mat-option [value]="null">Select collar</mat-option>
+                  <mat-option *ngFor="let collar of collars" [value]="collar.id">{{ collar.serialNumber }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Assigned at</mat-label>
+              <input matInput type="datetime-local" formControlName="assignedAt" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Reason</mat-label>
+              <input matInput formControlName="reason" maxlength="250" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" maxlength="1000"></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit">Assign collar</button>
+          </form>
+        </mat-tab>
 
-      <h2 class="section-spacer">Unassign Collar</h2>
-      <form class="form-grid" [formGroup]="unassignForm" (ngSubmit)="unassignCollar()">
-        <label>
-          Active assignment
-          <select formControlName="assignmentId">
-            <option [ngValue]="null">Select active assignment</option>
-            <option *ngFor="let assignment of activeAssignments" [ngValue]="assignment.id">
-              {{ getAssignmentLabel(assignment) }}
-            </option>
-          </select>
-        </label>
-        <label>
-          Unassigned at
-          <input type="datetime-local" formControlName="unassignedAt" />
-        </label>
-        <label>
-          Reason
-          <input formControlName="reason" maxlength="250" />
-        </label>
-        <label>
-          Notes
-          <textarea formControlName="notes" maxlength="1000"></textarea>
-        </label>
-        <button type="submit">Unassign collar</button>
-      </form>
+        <mat-tab label="Unassign">
+          <form class="form-grid tab-form" [formGroup]="unassignForm" (ngSubmit)="unassignCollar()">
+            <mat-form-field appearance="outline">
+              <mat-label>Active assignment</mat-label>
+              <mat-select formControlName="assignmentId">
+                <mat-option [value]="null">Select active assignment</mat-option>
+                <mat-option *ngFor="let assignment of activeAssignments" [value]="assignment.id">
+                  {{ getAssignmentLabel(assignment) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Unassigned at</mat-label>
+              <input matInput type="datetime-local" formControlName="unassignedAt" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Reason</mat-label>
+              <input matInput formControlName="reason" maxlength="250" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" maxlength="1000"></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit">Unassign collar</button>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
     </section>
   </div>
 </section>

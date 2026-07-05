@@ -4,7 +4,7 @@
       <h1>Species</h1>
       <p>Taxonomy setup for the wildlife tracking domain.</p>
     </div>
-    <button class="secondary" type="button" (click)="load()" [disabled]="isLoading">Refresh</button>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="isLoading">Refresh</button>
   </header>
 
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
@@ -14,19 +14,17 @@
     <section class="table-panel">
       <h2>Species</h2>
       <div class="table-wrap" *ngIf="species.length; else noSpecies">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of species">
-              <td>{{ item.name }}</td>
-              <td>{{ item.description }}</td>
-            </tr>
-          </tbody>
+        <table mat-table [dataSource]="species">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let item">{{ item.description }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="speciesColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: speciesColumns"></tr>
         </table>
       </div>
       <ng-template #noSpecies>
@@ -35,19 +33,17 @@
 
       <h2 class="section-spacer">Subspecies</h2>
       <div class="table-wrap" *ngIf="subspecies.length; else noSubspecies">
-        <table>
-          <thead>
-            <tr>
-              <th>Species</th>
-              <th>Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of subspecies">
-              <td>{{ getSpeciesName(item.speciesId) }}</td>
-              <td>{{ item.name }}</td>
-            </tr>
-          </tbody>
+        <table mat-table [dataSource]="subspecies">
+          <ng-container matColumnDef="species">
+            <th mat-header-cell *matHeaderCellDef>Species</th>
+            <td mat-cell *matCellDef="let item">{{ getSpeciesName(item.speciesId) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="subspeciesColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: subspeciesColumns"></tr>
         </table>
       </div>
       <ng-template #noSubspecies>
@@ -58,35 +54,35 @@
     <section class="panel">
       <h2>Create Species</h2>
       <form class="form-grid" [formGroup]="speciesForm" (ngSubmit)="createSpecies()">
-        <label>
-          Name
-          <input formControlName="name" maxlength="120" />
-        </label>
-        <label>
-          Description
-          <textarea formControlName="description" maxlength="1000"></textarea>
-        </label>
-        <button type="submit">Create species</button>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="120" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" maxlength="1000"></textarea>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">Create species</button>
       </form>
 
       <h2 class="section-spacer">Create Subspecies</h2>
       <form class="form-grid" [formGroup]="subspeciesForm" (ngSubmit)="createSubspecies()">
-        <label>
-          Species
-          <select formControlName="speciesId">
-            <option [ngValue]="null">Select species</option>
-            <option *ngFor="let item of species" [ngValue]="item.id">{{ item.name }}</option>
-          </select>
-        </label>
-        <label>
-          Name
-          <input formControlName="name" maxlength="120" />
-        </label>
-        <label>
-          Description
-          <textarea formControlName="description" maxlength="1000"></textarea>
-        </label>
-        <button type="submit">Create subspecies</button>
+        <mat-form-field appearance="outline">
+          <mat-label>Species</mat-label>
+          <mat-select formControlName="speciesId">
+            <mat-option [value]="null">Select species</mat-option>
+            <mat-option *ngFor="let item of species" [value]="item.id">{{ item.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="120" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" maxlength="1000"></textarea>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">Create subspecies</button>
       </form>
     </section>
   </div>

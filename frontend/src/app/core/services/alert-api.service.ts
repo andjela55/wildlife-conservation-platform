@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Alert, CreateAlertRequest, ResolveAlertRequest } from '../models/wildlife.models';
+import { Alert, CreateAlertRequest, ResolveAlertRequest } from '../models';
 import { BaseApiService } from './base-api.service';
 
 @Injectable({ providedIn: 'root' })

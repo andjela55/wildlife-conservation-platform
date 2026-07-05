@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
-import { Alert, alertTypeOptions, Animal, Collar, Severity, severityOptions } from '../../core/models/wildlife.models';
+import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
+import { Alert, alertTypeOptions, Animal, Collar, CreateAlertRequest, Severity, severityOptions } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
@@ -14,15 +14,17 @@ import { enumKey } from '../../core/utils/enum-utils';
   templateUrl: './alerts.component.html',
   styleUrls: ['./alerts.component.scss']
 })
-export class AlertsComponent implements OnInit {
-  alerts: Alert[] = [];
-  animals: Animal[] = [];
-  collars: Collar[] = [];
+export class AlertsComponent implements OnInit, OnDestroy {
+  alerts: Array<Alert> = [];
+  animals: Array<Animal> = [];
+  collars: Array<Collar> = [];
+  alertColumns: Array<string> = ['animal', 'collar', 'type', 'severity', 'status', 'actions'];
   alertTypeOptions = alertTypeOptions;
   severityOptions = severityOptions;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  private readonly destroy$ = new Subject<void>();
 
   alertForm = this.fb.group({
     animalId: [null, [Validators.required, Validators.min(1)]],
@@ -42,7 +44,12 @@ export class AlertsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getAnimalName(animalId: number): string {
@@ -61,26 +68,27 @@ export class AlertsComponent implements OnInit {
     return enumKey(severity, 'Severity').toLowerCase();
   }
 
-  load(): void {
+  refresh(): void {
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
-    forkJoin({
+    return forkJoin({
       alerts: this.alertApi.getAll(),
       animals: this.animalApi.getAll(),
       collars: this.collarApi.getAll()
     })
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (result) => {
-          this.alerts = result.alerts;
-          this.animals = result.animals;
-          this.collars = result.collars;
-        },
-        error: () => {
+      .pipe(
+        map((result) => this.mapLoadData(result)),
+        catchError(() => {
           this.errorMessage = 'Unable to load alerts.';
-        }
-      });
+          return of(void 0);
+        }),
+        finalize(() => (this.isLoading = false))
+      );
   }
 
   createAlert(): void {
@@ -89,17 +97,9 @@ export class AlertsComponent implements OnInit {
       return;
     }
 
-    const value = this.alertForm.getRawValue();
     this.alertApi
-      .create({
-        animalId: value.animalId,
-        collarId: value.collarId || null,
-        createdByUserId: this.currentUser.userId,
-        alertType: value.alertType,
-        severity: value.severity,
-        description: value.description,
-        createdAt: localDateTimeInputToIso(value.createdAt)
-      })
+      .create(this.mapCreateAlertRequest())
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.successMessage = 'Alert created.';
@@ -110,7 +110,7 @@ export class AlertsComponent implements OnInit {
             severity: 'Medium',
             createdAt: toLocalDateTimeInputValue()
           });
-          this.load();
+          this.refresh();
         },
         error: () => {
           this.errorMessage = 'Unable to create alert.';
@@ -119,14 +119,33 @@ export class AlertsComponent implements OnInit {
   }
 
   resolveAlert(alert: Alert): void {
-    this.alertApi.resolve(alert.id, { resolvedAt: new Date().toISOString() }).subscribe({
+    this.alertApi.resolve(alert.id, { resolvedAt: new Date().toISOString() }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.successMessage = 'Alert resolved.';
-        this.load();
+        this.refresh();
       },
       error: () => {
         this.errorMessage = 'Unable to resolve alert.';
       }
     });
+  }
+
+  private mapLoadData(result: { alerts: Array<Alert>; animals: Array<Animal>; collars: Array<Collar> }): void {
+    this.alerts = result.alerts;
+    this.animals = result.animals;
+    this.collars = result.collars;
+  }
+
+  private mapCreateAlertRequest(): CreateAlertRequest {
+    const value = this.alertForm.getRawValue();
+    return {
+      animalId: value.animalId,
+      collarId: value.collarId || null,
+      createdByUserId: this.currentUser.userId,
+      alertType: value.alertType,
+      severity: value.severity,
+      description: value.description,
+      createdAt: localDateTimeInputToIso(value.createdAt)
+    };
   }
 }

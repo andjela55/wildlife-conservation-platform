@@ -1,14 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
 import {
     Alert,
     Animal,
     animalSexOptions,
+    CreateAnimalRequest,
     LocationPoint,
     RangerReport,
     Subspecies
-} from '../../core/models/wildlife.models';
+} from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { SubspeciesApiService } from '../../core/services/subspecies-api.service';
 import { localDateInputToIso } from '../../core/utils/date-utils';
@@ -18,17 +19,20 @@ import { localDateInputToIso } from '../../core/utils/date-utils';
   templateUrl: './animals.component.html',
   styleUrls: ['./animals.component.scss']
 })
-export class AnimalsComponent implements OnInit {
-  animals: Animal[] = [];
-  subspecies: Subspecies[] = [];
+export class AnimalsComponent implements OnInit, OnDestroy {
+  animals: Array<Animal> = [];
+  subspecies: Array<Subspecies> = [];
   selectedAnimal: Animal | null = null;
-  selectedLocations: LocationPoint[] = [];
-  selectedReports: RangerReport[] = [];
-  selectedAlerts: Alert[] = [];
+  selectedLocations: Array<LocationPoint> = [];
+  selectedReports: Array<RangerReport> = [];
+  selectedAlerts: Array<Alert> = [];
+  animalColumns: Array<string> = ['name', 'subspecies', 'sex', 'status'];
+  locationColumns: Array<string> = ['coordinates', 'recordedAt', 'signalType'];
   animalSexOptions = animalSexOptions;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  private readonly destroy$ = new Subject<void>();
 
   animalForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
@@ -46,34 +50,38 @@ export class AnimalsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getSubspeciesName(subspeciesId: number): string {
     return this.subspecies.find((item) => item.id === subspeciesId)?.name ?? `Subspecies #${subspeciesId}`;
   }
 
-  load(): void {
+  refresh(): void {
+    this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
-    forkJoin({
+    return forkJoin({
       animals: this.animalApi.getAll(),
       subspecies: this.subspeciesApi.getAll()
     })
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (result) => {
-          this.animals = result.animals;
-          this.subspecies = result.subspecies;
-          if (!this.selectedAnimal && this.animals.length) {
-            this.selectAnimal(this.animals[0]);
-          }
-        },
-        error: () => {
+      .pipe(
+        map((result) => this.mapLoadData(result)),
+        catchError(() => {
           this.errorMessage = 'Unable to load animals.';
-        }
-      });
+          return of(void 0);
+        }),
+        finalize(() => (this.isLoading = false))
+      );
   }
 
   selectAnimal(animal: Animal): void {
@@ -82,11 +90,9 @@ export class AnimalsComponent implements OnInit {
       locations: this.animalApi.getLocations(animal.id),
       reports: this.animalApi.getReports(animal.id),
       alerts: this.animalApi.getAlerts(animal.id)
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
-        this.selectedLocations = result.locations;
-        this.selectedReports = result.reports;
-        this.selectedAlerts = result.alerts;
+        this.mapSelectedAnimalData(result);
       },
       error: () => {
         this.errorMessage = 'Unable to load animal details.';
@@ -100,21 +106,14 @@ export class AnimalsComponent implements OnInit {
       return;
     }
 
-    const value = this.animalForm.getRawValue();
     this.animalApi
-      .create({
-        name: value.name,
-        subspeciesId: value.subspeciesId,
-        sex: value.sex,
-        dateOfBirth: localDateInputToIso(value.dateOfBirth),
-        notes: value.notes || null,
-        isActive: value.isActive
-      })
+      .create(this.mapCreateAnimalRequest())
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (animal) => {
           this.successMessage = 'Animal created.';
           this.animalForm.reset({ sex: 'Unknown', isActive: true });
-          this.load();
+          this.refresh();
           this.selectAnimal(animal);
         },
         error: () => {
@@ -123,4 +122,33 @@ export class AnimalsComponent implements OnInit {
       });
   }
 
+  private mapLoadData(result: { animals: Array<Animal>; subspecies: Array<Subspecies> }): void {
+    this.animals = result.animals;
+    this.subspecies = result.subspecies;
+    if (!this.selectedAnimal && this.animals.length) {
+      this.selectAnimal(this.animals[0]);
+    }
+  }
+
+  private mapSelectedAnimalData(result: {
+    locations: Array<LocationPoint>;
+    reports: Array<RangerReport>;
+    alerts: Array<Alert>;
+  }): void {
+    this.selectedLocations = result.locations;
+    this.selectedReports = result.reports;
+    this.selectedAlerts = result.alerts;
+  }
+
+  private mapCreateAnimalRequest(): CreateAnimalRequest {
+    const value = this.animalForm.getRawValue();
+    return {
+      name: value.name,
+      subspeciesId: value.subspeciesId,
+      sex: value.sex,
+      dateOfBirth: localDateInputToIso(value.dateOfBirth),
+      notes: value.notes || null,
+      isActive: value.isActive
+    };
+  }
 }
