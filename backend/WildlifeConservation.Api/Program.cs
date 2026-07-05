@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using WildlifeConservation.Api;
 using WildlifeConservation.Api.Middleware;
 using WildlifeConservation.Repositories;
@@ -8,7 +9,11 @@ using WildlifeConservation.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // CORS (DEV only config)
 builder.Services.AddCors(options =>

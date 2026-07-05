@@ -4,6 +4,7 @@ public class LocationPointService(
     ILocationPointRepository locationPointRepository,
     IAnimalRepository animalRepository,
     ICollarRepository collarRepository,
+    ICollarAssignmentRepository collarAssignmentRepository,
     IMapper mapper) : ILocationPointService
 {
     public async Task<LocationPoint> CreateAsync(CreateLocationPointDto dto, CancellationToken cancellationToken = default)
@@ -11,8 +12,24 @@ public class LocationPointService(
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
         await ServiceHelpers.EnsureFoundAsync(collarRepository.GetByIdAsync(dto.CollarId, cancellationToken), dto.CollarId, "Collar");
 
+        var recordedAt = ServiceHelpers.AsUtc(dto.RecordedAt);
+        var collarWasAssignedToAnimal = await collarAssignmentRepository.Query()
+            .AnyAsync(x =>
+                x.AnimalId == dto.AnimalId &&
+                x.CollarId == dto.CollarId &&
+                x.AssignedAt <= recordedAt &&
+                (x.UnassignedAt == null || x.UnassignedAt >= recordedAt),
+                cancellationToken);
+
+        if (!collarWasAssignedToAnimal)
+        {
+            throw new ServiceException(
+                (int)HttpStatusCode.BadRequest,
+                "Location points can only be recorded from a collar assigned to the animal at the recorded time.");
+        }
+
         var locationPoint = mapper.Map<LocationPoint>(dto);
-        locationPoint.RecordedAt = ServiceHelpers.AsUtc(dto.RecordedAt);
+        locationPoint.RecordedAt = recordedAt;
         locationPoint.Notes = dto.Notes?.Trim();
 
         locationPoint = await locationPointRepository.InsertAsync(locationPoint, cancellationToken);

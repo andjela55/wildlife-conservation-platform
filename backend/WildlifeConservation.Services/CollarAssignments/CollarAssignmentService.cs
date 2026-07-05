@@ -7,6 +7,15 @@ public class CollarAssignmentService(
     ITransactionService transactionService,
     IMapper mapper) : ICollarAssignmentService
 {
+    public async Task<List<CollarAssignment>> GetActiveAsync(CancellationToken cancellationToken = default)
+    {
+        return await collarAssignmentRepository.Query()
+            .Where(x => x.UnassignedAt == null)
+            .OrderBy(x => x.AnimalId)
+            .ThenBy(x => x.CollarId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<CollarAssignment> CreateAsync(CreateCollarAssignmentDto dto, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
