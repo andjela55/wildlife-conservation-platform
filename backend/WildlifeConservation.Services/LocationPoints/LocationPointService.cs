@@ -5,12 +5,13 @@ public class LocationPointService(
     IAnimalRepository animalRepository,
     ICollarRepository collarRepository,
     ICollarAssignmentRepository collarAssignmentRepository,
+    ILocationPointNotificationService locationPointNotificationService,
     IMapper mapper) : ILocationPointService
 {
     public async Task<LocationPoint> CreateAsync(CreateLocationPointDto dto, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
-        await ServiceHelpers.EnsureFoundAsync(collarRepository.GetByIdAsync(dto.CollarId, cancellationToken), dto.CollarId, "Collar");
+        var animal = await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
+        var collar = await ServiceHelpers.EnsureFoundAsync(collarRepository.GetByIdAsync(dto.CollarId, cancellationToken), dto.CollarId, "Collar");
 
         var recordedAt = ServiceHelpers.AsUtc(dto.RecordedAt);
         var collarWasAssignedToAnimal = await collarAssignmentRepository.Query()
@@ -33,6 +34,7 @@ public class LocationPointService(
         locationPoint.Notes = dto.Notes?.Trim();
 
         locationPoint = await locationPointRepository.InsertAsync(locationPoint, cancellationToken);
+        await locationPointNotificationService.NotifyLocationPointCreatedAsync(locationPoint, animal, collar, cancellationToken);
 
         return locationPoint;
     }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using WildlifeConservation.Api;
+using WildlifeConservation.Api.Hubs;
 using WildlifeConservation.Api.Middleware;
 using WildlifeConservation.Repositories;
 using WildlifeConservation.Repositories.Data;
@@ -23,7 +24,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -34,6 +36,7 @@ builder.Services.AddSwaggerGen();
 // DI
 builder.Services.AddRepositoryLayer(builder.Configuration);
 builder.Services.AddServiceLayer();
+builder.Services.AddApiLayer();
 builder.Services.AddAutoMapper(_ => { }, typeof(ApiAssemblyMarker).Assembly);
 
 var app = builder.Build();
@@ -58,6 +61,7 @@ app.UseAuthorization();
 app.UseMiddleware<ServiceExceptionMiddleware>();
 
 app.MapControllers();
+app.MapHub<AnimalTrackingHub>("/animal-tracking-hub");
 
 if (app.Environment.IsDevelopment())
 {
