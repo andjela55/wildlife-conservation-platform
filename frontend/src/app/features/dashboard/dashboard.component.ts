@@ -22,11 +22,13 @@ import {
   Animal,
   Collar,
   LocationPoint,
+  LocationPointReceived,
   RangerReport,
   Severity,
 } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
+import { AnimalTrackingSignalRService } from '../../core/services/animal-tracking-signal-r.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
 import { LocationPointApiService } from '../../core/services/location-point-api.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
@@ -51,6 +53,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private map?: L.Map;
   private markers = new Map<number, L.Marker>();
+  private mapResizeFrame?: number;
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -59,11 +62,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private readonly locationPointApi: LocationPointApiService,
     private readonly rangerReportApi: RangerReportApiService,
     private readonly alertApi: AlertApiService,
+    private readonly animalTrackingSignalR: AnimalTrackingSignalRService,
     private ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+    this.animalTrackingSignalR.locationPointReceived$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((locationPoint) => {
+        this.ngZone.run(() => this.handleLocationPointReceived(locationPoint));
+      });
+
+    this.animalTrackingSignalR.start()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: () => {
+          this.errorMessage = 'Unable to connect to animal tracking updates.';
+        }
+      });
   }
   ngAfterViewInit(): void {
     this.initMap();
@@ -71,7 +88,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.mapResizeFrame !== undefined) {
+      cancelAnimationFrame(this.mapResizeFrame);
+    }
+
     this.map?.remove();
+    this.animalTrackingSignalR.stop().subscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -135,6 +157,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
+  getLocationAnimalName(point: LocationPoint): string {
+    return point.animalName || this.getAnimalName(point.animalId);
+  }
+
   getSeverityIcon(severity: Severity): string {
     return `assets/icons/alerts/alarm_${enumKey(severity, 'Severity').toLowerCase()}.svg`;
   }
@@ -179,6 +205,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.renderMarkers(this.mapLocations);
     this.fitToCurrentLocations();
   }
+
+  private handleLocationPointReceived(locationPoint: LocationPointReceived): void {
+    const existingIndex = this.latestLocations.findIndex((point) => point.animalId === locationPoint.animalId);
+
+    if (existingIndex >= 0) {
+      this.latestLocations = this.latestLocations.map((point, index) =>
+        index === existingIndex ? locationPoint : point);
+    } else {
+      this.latestLocations = [locationPoint, ...this.latestLocations];
+    }
+
+    this.upsertMarker(locationPoint);
+
+    if (this.selectedLocation?.animalId === locationPoint.animalId) {
+      this.selectedLocation = locationPoint;
+    }
+  }
+
   private initMap(): void {
     if (this.map) {
       return;
@@ -203,37 +247,59 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.map?.closePopup();
     });
 
-    setTimeout(() => {
+    this.mapResizeFrame = requestAnimationFrame(() => {
       this.map?.invalidateSize();
-    }, 100);
-
-    setTimeout(() => {
-      this.map?.invalidateSize();
-    }, 500);
+      this.mapResizeFrame = undefined;
+    });
   }
-renderMarkers(points: Array<LocationPoint>): void {
-  if (!this.map) {
-    return;
-  }
-
-  this.markers.forEach((marker) => marker.remove());
-  this.markers.clear();
-
-  points.forEach((point) => {
-    if (!this.isValidLocation(point)) {
+  renderMarkers(points: Array<LocationPoint>): void {
+    if (!this.map) {
       return;
     }
 
-    const marker = L.marker([point.latitude, point.longitude], {
+    this.markers.forEach((marker) => marker.remove());
+    this.markers.clear();
+
+    points.forEach((point) => this.upsertMarker(point));
+  }
+
+  private upsertMarker(point: LocationPoint): void {
+    if (!this.map || !this.isValidLocation(point)) {
+      return;
+    }
+
+    const marker = this.markers.get(point.animalId);
+    const latLng: L.LatLngExpression = [point.latitude, point.longitude];
+
+    if (marker) {
+      marker.setLatLng(latLng);
+      marker.setIcon(this.createAnimalMarkerIcon(point));
+      marker.bindTooltip(this.getLocationAnimalName(point), {
+        direction: 'top',
+        offset: [0, -12],
+      });
+      this.bindMarkerClick(marker, point);
+      return;
+    }
+
+    const newMarker = L.marker(latLng, {
       icon: this.createAnimalMarkerIcon(point),
       bubblingMouseEvents: false,
     });
 
-    marker.bindTooltip(this.getAnimalName(point.animalId), {
+    newMarker.bindTooltip(this.getLocationAnimalName(point), {
       direction: 'top',
       offset: [0, -12],
     });
 
+    this.bindMarkerClick(newMarker, point);
+
+    newMarker.addTo(this.map);
+    this.markers.set(point.animalId, newMarker);
+  }
+
+  private bindMarkerClick(marker: L.Marker, point: LocationPoint): void {
+    marker.off('click');
     marker.on('click', () => {
       this.ngZone.run(() => {
         this.selectedLocation = point;
@@ -241,11 +307,7 @@ renderMarkers(points: Array<LocationPoint>): void {
 
       this.map?.closePopup();
     });
-
-    marker.addTo(this.map!);
-    this.markers.set(point.animalId, marker);
-  });
-}
+  }
   fitToCurrentLocations(): void {
     if (!this.map) {
       return;
@@ -326,13 +388,5 @@ renderMarkers(points: Array<LocationPoint>): void {
     };
 
     this.map.setView([assignedArea.latitude, assignedArea.longitude], 14);
-
-    L.circle([assignedArea.latitude, assignedArea.longitude], {
-      radius: assignedArea.radiusMeters,
-      color: '#23733d',
-      fillColor: '#23733d',
-      fillOpacity: 0.08,
-      weight: 2,
-    }).addTo(this.map);
   }
 }

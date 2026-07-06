@@ -92,33 +92,24 @@
       <aside class="map-side-panel" *ngIf="selectedLocation">
         <div class="map-side-panel-header">
           <div>
-            <h3>{{ getAnimalName(selectedLocation.animalId) }}</h3>
+            <h3>{{ getLocationAnimalName(selectedLocation) }}</h3>
             <p>Latest collar signal</p>
           </div>
-
-          <button
-            class="map-panel-close"
-            type="button"
-            aria-label="Close animal details"
-            (click)="selectedLocation = null"
-          >
-            ×
-          </button>
         </div>
 
         <div class="detail-row">
-          <span>Animal ID</span>
-          <strong>{{ selectedLocation.animalId }}</strong>
+          <span>Animal</span>
+          <strong>{{ getLocationAnimalName(selectedLocation) }}</strong>
         </div>
 
         <div class="detail-row">
-          <span>Collar ID</span>
-          <strong>{{ selectedLocation.collarId }}</strong>
+          <span>Collar</span>
+          <strong>{{ selectedLocation.collarSerialNumber || selectedLocation.collarId }}</strong>
         </div>
 
         <div class="detail-row">
           <span>Signal type</span>
-          <strong>{{ selectedLocation.signalType }}</strong>
+          <strong>{{ selectedLocation.signalType | enumLabel: "SignalType" }}</strong>
         </div>
 
         <div class="detail-row">
