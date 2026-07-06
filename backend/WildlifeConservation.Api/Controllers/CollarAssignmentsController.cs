@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class CollarAssignmentsController(ICollarAssignmentService collarAssignmentService, IMapper mapper) : ControllerBase
 {
     [HttpGet("active")]
-    public async Task<ActionResult<List<CollarAssignmentResponseDto>>> GetActive(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<CollarAssignmentResponseDto>>> GetActive([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var assignments = await collarAssignmentService.GetActiveAsync(cancellationToken);
-        return Ok(mapper.Map<List<CollarAssignmentResponseDto>>(assignments));
+        var assignments = await collarAssignmentService.GetActiveAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<CollarAssignment, CollarAssignmentResponseDto>(assignments));
     }
 
     [HttpPost]

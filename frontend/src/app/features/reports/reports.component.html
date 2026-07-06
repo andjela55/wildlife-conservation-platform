@@ -39,6 +39,14 @@
           <tr mat-row *matRowDef="let row; columns: reportColumns"></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="reportsTotalCount"
+        [length]="reportsTotalCount"
+        [pageIndex]="reportPageIndex"
+        [pageSize]="reportPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onReportPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noReports>
         <div class="empty">No reports found.</div>
       </ng-template>
@@ -47,6 +55,10 @@
     <section class="panel">
       <h2>Create Report</h2>
       <form class="form-grid" [formGroup]="reportForm" (ngSubmit)="createReport()">
+        <div *ngIf="reportFormErrorMessage" class="message error form-message">
+          {{ reportFormErrorMessage }}
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Animal</mat-label>
           <mat-select formControlName="animalId">

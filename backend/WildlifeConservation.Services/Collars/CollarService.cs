@@ -5,13 +5,11 @@ public class CollarService(
     ICollarAssignmentRepository collarAssignmentRepository,
     IMapper mapper) : ICollarService
 {
-    public async Task<List<Collar>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Collar>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var collars = await collarRepository.Query()
+        return await collarRepository.Query()
             .OrderBy(x => x.SerialNumber)
-            .ToListAsync(cancellationToken);
-
-        return collars;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<Collar> GetByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class AlertsController(IAlertService alertService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<AlertResponseDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<AlertResponseDto>>> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var alerts = await alertService.GetAllAsync(cancellationToken);
-        return Ok(mapper.Map<List<AlertResponseDto>>(alerts));
+        var alerts = await alertService.GetAllAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Alert, AlertResponseDto>(alerts));
     }
 
     [HttpGet("{id:int}")]

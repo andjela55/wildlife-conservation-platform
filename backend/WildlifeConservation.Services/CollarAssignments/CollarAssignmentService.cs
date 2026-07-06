@@ -7,13 +7,13 @@ public class CollarAssignmentService(
     ITransactionService transactionService,
     IMapper mapper) : ICollarAssignmentService
 {
-    public async Task<List<CollarAssignment>> GetActiveAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<CollarAssignment>> GetActiveAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         return await collarAssignmentRepository.Query()
             .Where(x => x.UnassignedAt == null)
             .OrderBy(x => x.AnimalId)
             .ThenBy(x => x.CollarId)
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<CollarAssignment> CreateAsync(CreateCollarAssignmentDto dto, CancellationToken cancellationToken = default)

@@ -35,6 +35,14 @@
           <tr mat-row *matRowDef="let row; columns: collarColumns"></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="collarsTotalCount"
+        [length]="collarsTotalCount"
+        [pageIndex]="collarPageIndex"
+        [pageSize]="collarPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onCollarPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noCollars>
         <div class="empty">No collars found.</div>
       </ng-template>
@@ -44,6 +52,10 @@
       <mat-tab-group [mat-stretch-tabs]="false">
         <mat-tab label="Create">
           <form class="form-grid tab-form" [formGroup]="collarForm" (ngSubmit)="createCollar()">
+            <div *ngIf="collarFormErrorMessage" class="message error form-message">
+              {{ collarFormErrorMessage }}
+            </div>
+
             <mat-form-field appearance="outline">
               <mat-label>Serial number</mat-label>
               <input matInput formControlName="serialNumber" maxlength="120" />
@@ -74,6 +86,10 @@
 
         <mat-tab label="Assign">
           <form class="form-grid tab-form" [formGroup]="assignmentForm" (ngSubmit)="assignCollar()">
+            <div *ngIf="assignmentFormErrorMessage" class="message error form-message">
+              {{ assignmentFormErrorMessage }}
+            </div>
+
             <div class="form-row">
               <mat-form-field appearance="outline">
                 <mat-label>Animal</mat-label>
@@ -86,7 +102,7 @@
                 <mat-label>Collar</mat-label>
                 <mat-select formControlName="collarId">
                   <mat-option [value]="null">Select collar</mat-option>
-                  <mat-option *ngFor="let collar of collars" [value]="collar.id">{{ collar.serialNumber }}</mat-option>
+                  <mat-option *ngFor="let collar of collarOptions" [value]="collar.id">{{ collar.serialNumber }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
@@ -108,6 +124,10 @@
 
         <mat-tab label="Unassign">
           <form class="form-grid tab-form" [formGroup]="unassignForm" (ngSubmit)="unassignCollar()">
+            <div *ngIf="unassignFormErrorMessage" class="message error form-message">
+              {{ unassignFormErrorMessage }}
+            </div>
+
             <mat-form-field appearance="outline">
               <mat-label>Active assignment</mat-label>
               <mat-select formControlName="assignmentId">

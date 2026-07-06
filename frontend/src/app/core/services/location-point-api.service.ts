@@ -13,10 +13,10 @@ export class LocationPointApiService extends BaseApiService<LocationPoint, never
   }
 
   getLatest(): Observable<Array<LocationPoint>> {
-    return this.http.get<Array<LocationPoint>>(`${this.baseUrl}/latest`);
+    return this.getAllPagedItems<LocationPoint>(`${this.baseUrl}/latest`);
   }
 
   getByAnimal(animalId: number): Observable<Array<LocationPoint>> {
-    return this.http.get<Array<LocationPoint>>(`${this.baseUrl}/by-animal/${animalId}`);
+    return this.getAllPagedItems<LocationPoint>(`${this.baseUrl}/by-animal/${animalId}`);
   }
 }

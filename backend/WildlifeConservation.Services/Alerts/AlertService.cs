@@ -3,17 +3,15 @@ namespace WildlifeConservation.Services.Alerts;
 public class AlertService(
     IAlertRepository alertRepository,
     IAnimalRepository animalRepository,
-    ICollarRepository collarRepository,
+    ICollarAssignmentRepository collarAssignmentRepository,
     IUserRepository userRepository,
     IMapper mapper) : IAlertService
 {
-    public async Task<List<Alert>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Alert>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var alerts = await alertRepository.Query()
+        return await alertRepository.Query()
             .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return alerts;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<Alert> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -30,20 +28,25 @@ public class AlertService(
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
 
-        if (dto.CollarId.HasValue)
-        {
-            await ServiceHelpers.EnsureFoundAsync(collarRepository.GetByIdAsync(dto.CollarId.Value, cancellationToken), dto.CollarId.Value, "Collar");
-        }
-
         if (dto.CreatedByUserId.HasValue)
         {
             await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(dto.CreatedByUserId.Value, cancellationToken), dto.CreatedByUserId.Value, "User");
         }
 
+        var createdAt = ServiceHelpers.AsUtc(dto.CreatedAt);
+        var activeAssignment = await collarAssignmentRepository.Query()
+            .Where(x =>
+                x.AnimalId == dto.AnimalId &&
+                x.AssignedAt <= createdAt &&
+                (x.UnassignedAt == null || x.UnassignedAt >= createdAt))
+            .OrderByDescending(x => x.AssignedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var alert = mapper.Map<Alert>(dto);
+        alert.CollarId = activeAssignment?.CollarId;
         alert.Description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
         alert.IsResolved = false;
-        alert.CreatedAt = ServiceHelpers.AsUtc(dto.CreatedAt);
+        alert.CreatedAt = createdAt;
 
         alert = await alertRepository.InsertAsync(alert, cancellationToken);
 

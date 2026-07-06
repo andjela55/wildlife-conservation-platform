@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
+import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
-import { Animal, CreateRangerReportRequest, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models';
+import { Animal, CreateRangerReportRequest, PagedResult, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CurrentUserService } from '../../core/services/current-user.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
@@ -19,8 +20,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
   reportColumns: Array<string> = ['subject', 'type', 'severity', 'createdAt', 'description'];
   reportTypeOptions = reportTypeOptions;
   severityOptions = severityOptions;
+  pageSizeOptions: Array<number> = [5, 10, 20];
+  reportPageIndex = 0;
+  reportPageSize = 10;
+  reportsTotalCount = 0;
   isLoading = false;
   errorMessage = '';
+  reportFormErrorMessage = '';
   successMessage = '';
   private readonly destroy$ = new Subject<void>();
 
@@ -66,12 +72,21 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
+  onReportPageChanged(event: PageEvent): void {
+    this.reportPageIndex = event.pageIndex;
+    this.reportPageSize = event.pageSize;
+    this.refresh();
+  }
+
   loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
     return forkJoin({
-      reports: this.rangerReportApi.getAll(),
+      reports: this.rangerReportApi.getPaged({
+        pageNumber: this.reportPageIndex + 1,
+        pageSize: this.reportPageSize
+      }),
       animals: this.animalApi.getAll()
     })
       .pipe(
@@ -85,8 +100,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   createReport(): void {
+    this.reportFormErrorMessage = '';
+    this.successMessage = '';
+
     if (this.reportForm.invalid) {
       this.reportForm.markAllAsTouched();
+      this.reportFormErrorMessage = 'Please fix the highlighted fields.';
       return;
     }
 
@@ -96,6 +115,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.successMessage = 'Ranger report created.';
+          this.reportFormErrorMessage = '';
           this.reportForm.reset({
             animalId: null,
             reportType: 'Sighting',
@@ -107,13 +127,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
           this.refresh();
         },
         error: () => {
-          this.errorMessage = 'Unable to create ranger report.';
+          this.reportFormErrorMessage = 'Unable to create ranger report.';
         }
       });
   }
 
-  private mapLoadData(result: { reports: Array<RangerReport>; animals: Array<Animal> }): void {
-    this.reports = result.reports;
+  private mapLoadData(result: { reports: PagedResult<RangerReport>; animals: Array<Animal> }): void {
+    this.reports = result.reports.items;
+    this.reportsTotalCount = result.reports.totalCount;
+    this.reportPageIndex = result.reports.pageNumber - 1;
+    this.reportPageSize = result.reports.pageSize;
     this.animals = result.animals;
   }
 

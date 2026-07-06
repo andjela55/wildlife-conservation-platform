@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class CollarsController(ICollarService collarService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<CollarResponseDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<CollarResponseDto>>> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var collars = await collarService.GetAllAsync(cancellationToken);
-        return Ok(mapper.Map<List<CollarResponseDto>>(collars));
+        var collars = await collarService.GetAllAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Collar, CollarResponseDto>(collars));
     }
 
     [HttpGet("{id:int}")]

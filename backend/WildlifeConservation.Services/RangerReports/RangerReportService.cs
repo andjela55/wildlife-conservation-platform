@@ -6,13 +6,11 @@ public class RangerReportService(
     IUserRepository userRepository,
     IMapper mapper) : IRangerReportService
 {
-    public async Task<List<RangerReport>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<RangerReport>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var reports = await rangerReportRepository.Query()
+        return await rangerReportRepository.Query()
             .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return reports;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<RangerReport> GetByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -1,4 +1,5 @@
 export * from './api-enum.type';
+export * from './paged-result.model';
 export * from './animal-sex.enum';
 export * from './collar-status.enum';
 export * from './signal-type.enum';

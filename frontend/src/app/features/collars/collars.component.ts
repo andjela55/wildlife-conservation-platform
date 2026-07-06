@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
+import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
 import {
   Animal,
@@ -8,6 +9,7 @@ import {
   collarStatusOptions,
   CreateCollarAssignmentRequest,
   CreateCollarRequest,
+  PagedResult,
   UnassignCollarRequest
 } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
@@ -21,12 +23,20 @@ import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/u
 })
 export class CollarsComponent implements OnInit, OnDestroy {
   collars: Array<Collar> = [];
+  collarOptions: Array<Collar> = [];
   animals: Array<Animal> = [];
   activeAssignments: Array<CollarAssignment> = [];
   collarColumns: Array<string> = ['serialNumber', 'model', 'manufacturer', 'status'];
   collarStatusOptions = collarStatusOptions;
+  pageSizeOptions: Array<number> = [5, 10, 20];
+  collarPageIndex = 0;
+  collarPageSize = 10;
+  collarsTotalCount = 0;
   isLoading = false;
   errorMessage = '';
+  collarFormErrorMessage = '';
+  assignmentFormErrorMessage = '';
+  unassignFormErrorMessage = '';
   successMessage = '';
   private readonly destroy$ = new Subject<void>();
 
@@ -72,12 +82,22 @@ export class CollarsComponent implements OnInit, OnDestroy {
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
+  onCollarPageChanged(event: PageEvent): void {
+    this.collarPageIndex = event.pageIndex;
+    this.collarPageSize = event.pageSize;
+    this.refresh();
+  }
+
   loadData(): Observable<void> {
     this.isLoading = true;
     this.errorMessage = '';
 
     return forkJoin({
-      collars: this.collarApi.getAll(),
+      collars: this.collarApi.getPaged({
+        pageNumber: this.collarPageIndex + 1,
+        pageSize: this.collarPageSize
+      }),
+      collarOptions: this.collarApi.getAll(),
       animals: this.animalApi.getAll(),
       activeAssignments: this.collarApi.getActiveAssignments()
     })
@@ -96,7 +116,7 @@ export class CollarsComponent implements OnInit, OnDestroy {
   }
 
   getCollarSerial(collarId: number): string {
-    return this.collars.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
+    return this.collarOptions.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
   }
 
   getAssignmentLabel(assignment: CollarAssignment): string {
@@ -105,8 +125,12 @@ export class CollarsComponent implements OnInit, OnDestroy {
   }
 
   createCollar(): void {
+    this.collarFormErrorMessage = '';
+    this.successMessage = '';
+
     if (this.collarForm.invalid) {
       this.collarForm.markAllAsTouched();
+      this.collarFormErrorMessage = 'Please fix the highlighted fields.';
       return;
     }
 
@@ -116,18 +140,23 @@ export class CollarsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.successMessage = 'Collar created.';
+          this.collarFormErrorMessage = '';
           this.collarForm.reset({ status: 'Available' });
           this.refresh();
         },
         error: () => {
-          this.errorMessage = 'Unable to create collar.';
+          this.collarFormErrorMessage = 'Unable to create collar.';
         }
       });
   }
 
   assignCollar(): void {
+    this.assignmentFormErrorMessage = '';
+    this.successMessage = '';
+
     if (this.assignmentForm.invalid) {
       this.assignmentForm.markAllAsTouched();
+      this.assignmentFormErrorMessage = 'Please fix the highlighted fields.';
       return;
     }
 
@@ -137,18 +166,23 @@ export class CollarsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.successMessage = 'Collar assigned.';
+          this.assignmentFormErrorMessage = '';
           this.assignmentForm.reset({ assignedAt: toLocalDateTimeInputValue() });
           this.refresh();
         },
         error: () => {
-          this.errorMessage = 'Unable to assign collar.';
+          this.assignmentFormErrorMessage = 'Unable to assign collar.';
         }
       });
   }
 
   unassignCollar(): void {
+    this.unassignFormErrorMessage = '';
+    this.successMessage = '';
+
     if (this.unassignForm.invalid) {
       this.unassignForm.markAllAsTouched();
+      this.unassignFormErrorMessage = 'Please fix the highlighted fields.';
       return;
     }
 
@@ -159,21 +193,27 @@ export class CollarsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.successMessage = 'Collar unassigned.';
+          this.unassignFormErrorMessage = '';
           this.unassignForm.reset({ unassignedAt: toLocalDateTimeInputValue() });
           this.refresh();
         },
         error: () => {
-          this.errorMessage = 'Unable to unassign collar.';
+          this.unassignFormErrorMessage = 'Unable to unassign collar.';
         }
       });
   }
 
   private mapLoadData(result: {
-    collars: Array<Collar>;
+    collars: PagedResult<Collar>;
+    collarOptions: Array<Collar>;
     animals: Array<Animal>;
     activeAssignments: Array<CollarAssignment>;
   }): void {
-    this.collars = result.collars;
+    this.collars = result.collars.items;
+    this.collarOptions = result.collarOptions;
+    this.collarsTotalCount = result.collars.totalCount;
+    this.collarPageIndex = result.collars.pageNumber - 1;
+    this.collarPageSize = result.collars.pageSize;
     this.animals = result.animals;
     this.activeAssignments = result.activeAssignments;
   }

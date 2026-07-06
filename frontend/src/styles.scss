@@ -311,8 +311,20 @@ button:disabled:not(.mat-mdc-button-base) {
   color: var(--forest-700);
 }
 
+.form-message {
+  border: 1px solid rgba(143, 32, 24, 0.18);
+  box-shadow: 0 10px 24px rgba(143, 32, 24, 0.12);
+  font-weight: 700;
+}
+
 .table-wrap {
   overflow-x: auto;
+}
+
+.mat-mdc-paginator {
+  margin-top: 8px;
+  border-top: 1px solid rgba(45, 74, 64, 0.1);
+  background: transparent;
 }
 
 table {

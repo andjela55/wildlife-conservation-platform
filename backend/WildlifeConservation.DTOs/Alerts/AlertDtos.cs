@@ -8,7 +8,6 @@ public record CreateAlertDto
     [Range(1, int.MaxValue)]
     public int AnimalId { get; init; }
 
-    public int? CollarId { get; init; }
     public int? CreatedByUserId { get; init; }
     public AlertType AlertType { get; init; } = AlertType.Other;
     public Severity Severity { get; init; } = Severity.Low;

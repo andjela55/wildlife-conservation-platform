@@ -45,6 +45,14 @@
           <tr mat-row *matRowDef="let row; columns: alertColumns"></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="alertsTotalCount"
+        [length]="alertsTotalCount"
+        [pageIndex]="alertPageIndex"
+        [pageSize]="alertPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onAlertPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noAlerts>
         <div class="empty">No alerts found.</div>
       </ng-template>
@@ -53,6 +61,10 @@
     <section class="panel">
       <h2>Create Alert</h2>
       <form class="form-grid" [formGroup]="alertForm" (ngSubmit)="createAlert()">
+        <div *ngIf="alertFormErrorMessage" class="message error form-message">
+          {{ alertFormErrorMessage }}
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Animal</mat-label>
           <mat-select formControlName="animalId">
@@ -61,11 +73,8 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Collar</mat-label>
-          <mat-select formControlName="collarId">
-            <mat-option [value]="null">No collar</mat-option>
-            <mat-option *ngFor="let collar of collars" [value]="collar.id">{{ collar.serialNumber }}</mat-option>
-          </mat-select>
+          <mat-label>Assigned collar</mat-label>
+          <input matInput [value]="getSelectedAnimalCollarSerial()" readonly />
         </mat-form-field>
         <div class="form-row">
           <mat-form-field appearance="outline">

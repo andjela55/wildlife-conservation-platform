@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class SubspeciesController(ISubspeciesService subspeciesService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<SubspeciesResponseDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<SubspeciesResponseDto>>> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var subspecies = await subspeciesService.GetAllAsync(cancellationToken);
-        return Ok(mapper.Map<List<SubspeciesResponseDto>>(subspecies));
+        var subspecies = await subspeciesService.GetAllAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Subspecies, SubspeciesResponseDto>(subspecies));
     }
 
     [HttpGet("{id:int}")]

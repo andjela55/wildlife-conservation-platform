@@ -14,16 +14,16 @@ public class LocationPointsController(ILocationPointService locationPointService
     }
 
     [HttpGet("latest")]
-    public async Task<ActionResult<List<LocationPointResponseDto>>> GetLatest(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<LocationPointResponseDto>>> GetLatest([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var locations = await locationPointService.GetLatestAsync(cancellationToken);
-        return Ok(mapper.Map<List<LocationPointResponseDto>>(locations));
+        var locations = await locationPointService.GetLatestAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<LocationPoint, LocationPointResponseDto>(locations));
     }
 
     [HttpGet("by-animal/{animalId:int}")]
-    public async Task<ActionResult<List<LocationPointResponseDto>>> GetByAnimal(int animalId, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<LocationPointResponseDto>>> GetByAnimal(int animalId, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var locations = await locationPointService.GetByAnimalAsync(animalId, cancellationToken);
-        return Ok(mapper.Map<List<LocationPointResponseDto>>(locations));
+        var locations = await locationPointService.GetByAnimalAsync(animalId, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<LocationPoint, LocationPointResponseDto>(locations));
     }
 }

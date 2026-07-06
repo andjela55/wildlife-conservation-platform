@@ -2,13 +2,11 @@ namespace WildlifeConservation.Services.Species;
 
 public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper) : ISpeciesService
 {
-    public async Task<List<Models.Species.Species>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Models.Species.Species>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var species = await speciesRepository.Query()
+        return await speciesRepository.Query()
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
-
-        return species;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<Models.Species.Species> GetByIdAsync(int id, CancellationToken cancellationToken = default)

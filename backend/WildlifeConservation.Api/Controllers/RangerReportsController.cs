@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class RangerReportsController(IRangerReportService rangerReportService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<RangerReportResponseDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<RangerReportResponseDto>>> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var reports = await rangerReportService.GetAllAsync(cancellationToken);
-        return Ok(mapper.Map<List<RangerReportResponseDto>>(reports));
+        var reports = await rangerReportService.GetAllAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<RangerReport, RangerReportResponseDto>(reports));
     }
 
     [HttpGet("{id:int}")]

@@ -27,6 +27,14 @@
           <tr mat-row *matRowDef="let row; columns: speciesColumns"></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="speciesTotalCount"
+        [length]="speciesTotalCount"
+        [pageIndex]="speciesPageIndex"
+        [pageSize]="speciesPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onSpeciesPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noSpecies>
         <div class="empty">No species found.</div>
       </ng-template>
@@ -46,6 +54,14 @@
           <tr mat-row *matRowDef="let row; columns: subspeciesColumns"></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="subspeciesTotalCount"
+        [length]="subspeciesTotalCount"
+        [pageIndex]="subspeciesPageIndex"
+        [pageSize]="subspeciesPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onSubspeciesPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noSubspecies>
         <div class="empty">No subspecies found.</div>
       </ng-template>
@@ -54,6 +70,10 @@
     <section class="panel">
       <h2>Create Species</h2>
       <form class="form-grid" [formGroup]="speciesForm" (ngSubmit)="createSpecies()">
+        <div *ngIf="speciesFormErrorMessage" class="message error form-message">
+          {{ speciesFormErrorMessage }}
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" maxlength="120" />
@@ -67,11 +87,15 @@
 
       <h2 class="section-spacer">Create Subspecies</h2>
       <form class="form-grid" [formGroup]="subspeciesForm" (ngSubmit)="createSubspecies()">
+        <div *ngIf="subspeciesFormErrorMessage" class="message error form-message">
+          {{ subspeciesFormErrorMessage }}
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Species</mat-label>
           <mat-select formControlName="speciesId">
             <mat-option [value]="null">Select species</mat-option>
-            <mat-option *ngFor="let item of species" [value]="item.id">{{ item.name }}</mat-option>
+            <mat-option *ngFor="let item of speciesOptions" [value]="item.id">{{ item.name }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">

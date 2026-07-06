@@ -8,13 +8,11 @@ public class AnimalService(
     IAlertRepository alertRepository,
     IMapper mapper) : IAnimalService
 {
-    public async Task<List<Animal>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Animal>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var animals = await animalRepository.Query()
+        return await animalRepository.Query()
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
-
-        return animals;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<Animal> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -64,39 +62,33 @@ public class AnimalService(
         return animal;
     }
 
-    public async Task<List<LocationPoint>> GetLocationsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<LocationPoint>> GetLocationsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
 
-        var locations = await locationPointRepository.Query()
+        return await locationPointRepository.Query()
             .Where(x => x.AnimalId == id)
             .OrderByDescending(x => x.RecordedAt)
-            .ToListAsync(cancellationToken);
-
-        return locations;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
-    public async Task<List<RangerReport>> GetReportsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<RangerReport>> GetReportsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
 
-        var reports = await rangerReportRepository.Query()
+        return await rangerReportRepository.Query()
             .Where(x => x.AnimalId == id)
             .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return reports;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
-    public async Task<List<Alert>> GetAlertsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Alert>> GetAlertsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
 
-        var alerts = await alertRepository.Query()
+        return await alertRepository.Query()
             .Where(x => x.AnimalId == id)
             .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return alerts;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 }

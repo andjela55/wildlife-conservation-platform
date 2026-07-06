@@ -5,13 +5,11 @@ public class SubspeciesService(
     ISpeciesRepository speciesRepository,
     IMapper mapper) : ISubspeciesService
 {
-    public async Task<List<Models.Subspecies.Subspecies>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Models.Subspecies.Subspecies>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var subspecies = await subspeciesRepository.Query()
+        return await subspeciesRepository.Query()
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
-
-        return subspecies;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 
     public async Task<Models.Subspecies.Subspecies> GetByIdAsync(int id, CancellationToken cancellationToken = default)

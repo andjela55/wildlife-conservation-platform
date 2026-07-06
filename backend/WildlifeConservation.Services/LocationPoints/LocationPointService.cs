@@ -39,7 +39,7 @@ public class LocationPointService(
         return locationPoint;
     }
 
-    public async Task<List<LocationPoint>> GetLatestAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<LocationPoint>> GetLatestAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         var locations = await locationPointRepository.Query()
             .OrderByDescending(x => x.RecordedAt)
@@ -51,18 +51,16 @@ public class LocationPointService(
             .OrderBy(x => x.AnimalId)
             .ToList();
 
-        return latest;
+        return latest.ToPagedResult(pagination);
     }
 
-    public async Task<List<LocationPoint>> GetByAnimalAsync(int animalId, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<LocationPoint>> GetByAnimalAsync(int animalId, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(animalId, cancellationToken), animalId, "Animal");
 
-        var locations = await locationPointRepository.Query()
+        return await locationPointRepository.Query()
             .Where(x => x.AnimalId == animalId)
             .OrderByDescending(x => x.RecordedAt)
-            .ToListAsync(cancellationToken);
-
-        return locations;
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 }

@@ -41,6 +41,14 @@
           ></tr>
         </table>
       </div>
+      <mat-paginator
+        *ngIf="animalsTotalCount"
+        [length]="animalsTotalCount"
+        [pageIndex]="animalPageIndex"
+        [pageSize]="animalPageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onAnimalPageChanged($event)"
+      ></mat-paginator>
       <ng-template #noAnimals>
         <div class="empty">No animals found.</div>
       </ng-template>
@@ -50,20 +58,20 @@
         <div class="detail-grid">
           <div>
             <span class="muted">Locations</span>
-            <strong>{{ selectedLocations.length }}</strong>
+            <strong>{{ locationsTotalCount }}</strong>
           </div>
           <div>
             <span class="muted">Reports</span>
-            <strong>{{ selectedReports.length }}</strong>
+            <strong>{{ reportsTotalCount }}</strong>
           </div>
           <div>
             <span class="muted">Alerts</span>
-            <strong>{{ selectedAlerts.length }}</strong>
+            <strong>{{ alertsTotalCount }}</strong>
           </div>
         </div>
 
         <div class="table-wrap">
-          <table mat-table [dataSource]="selectedLocations | slice:0:5">
+          <table mat-table [dataSource]="selectedLocations">
             <ng-container matColumnDef="coordinates">
               <th mat-header-cell *matHeaderCellDef>Latest coordinates</th>
               <td mat-cell *matCellDef="let point">{{ point.latitude }}, {{ point.longitude }}</td>
@@ -80,12 +88,24 @@
             <tr mat-row *matRowDef="let row; columns: locationColumns"></tr>
           </table>
         </div>
+        <mat-paginator
+          *ngIf="locationsTotalCount"
+          [length]="locationsTotalCount"
+          [pageIndex]="locationPageIndex"
+          [pageSize]="locationPageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onLocationPageChanged($event)"
+        ></mat-paginator>
       </section>
     </section>
 
     <section class="panel">
       <h2>Create Animal</h2>
       <form class="form-grid" [formGroup]="animalForm" (ngSubmit)="createAnimal()">
+        <div *ngIf="animalFormErrorMessage" class="message error form-message">
+          {{ animalFormErrorMessage }}
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" maxlength="120" />

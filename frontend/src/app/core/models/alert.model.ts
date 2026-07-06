@@ -16,7 +16,6 @@ export interface Alert {
 
 export interface CreateAlertRequest {
   animalId: number;
-  collarId: number | null;
   createdByUserId: number | null;
   alertType: AlertType;
   severity: Severity;

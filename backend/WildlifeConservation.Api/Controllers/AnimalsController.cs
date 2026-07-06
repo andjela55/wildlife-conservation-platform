@@ -7,10 +7,10 @@ namespace WildlifeConservation.Api.Controllers;
 public class AnimalsController(IAnimalService animalService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<AnimalResponseDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<AnimalResponseDto>>> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var animals = await animalService.GetAllAsync(cancellationToken);
-        return Ok(mapper.Map<List<AnimalResponseDto>>(animals));
+        var animals = await animalService.GetAllAsync(pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Animal, AnimalResponseDto>(animals));
     }
 
     [HttpGet("{id:int}")]
@@ -35,23 +35,23 @@ public class AnimalsController(IAnimalService animalService, IMapper mapper) : C
     }
 
     [HttpGet("{id:int}/locations")]
-    public async Task<ActionResult<List<LocationPointResponseDto>>> GetLocations(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<LocationPointResponseDto>>> GetLocations(int id, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var locations = await animalService.GetLocationsAsync(id, cancellationToken);
-        return Ok(mapper.Map<List<LocationPointResponseDto>>(locations));
+        var locations = await animalService.GetLocationsAsync(id, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<LocationPoint, LocationPointResponseDto>(locations));
     }
 
     [HttpGet("{id:int}/reports")]
-    public async Task<ActionResult<List<RangerReportResponseDto>>> GetReports(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<RangerReportResponseDto>>> GetReports(int id, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var reports = await animalService.GetReportsAsync(id, cancellationToken);
-        return Ok(mapper.Map<List<RangerReportResponseDto>>(reports));
+        var reports = await animalService.GetReportsAsync(id, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<RangerReport, RangerReportResponseDto>(reports));
     }
 
     [HttpGet("{id:int}/alerts")]
-    public async Task<ActionResult<List<AlertResponseDto>>> GetAlerts(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<AlertResponseDto>>> GetAlerts(int id, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var alerts = await animalService.GetAlertsAsync(id, cancellationToken);
-        return Ok(mapper.Map<List<AlertResponseDto>>(alerts));
+        var alerts = await animalService.GetAlertsAsync(id, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Alert, AlertResponseDto>(alerts));
     }
 }
