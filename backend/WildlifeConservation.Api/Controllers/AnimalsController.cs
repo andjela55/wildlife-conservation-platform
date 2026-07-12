@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/animals")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
 public class AnimalsController(IAnimalService animalService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -21,6 +22,7 @@ public class AnimalsController(IAnimalService animalService, IMapper mapper) : C
     }
 
     [HttpPost]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
     public async Task<ActionResult<AnimalResponseDto>> Create(CreateAnimalDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<AnimalResponseDto>(await animalService.CreateAsync(dto, cancellationToken));
@@ -28,6 +30,7 @@ public class AnimalsController(IAnimalService animalService, IMapper mapper) : C
     }
 
     [HttpPut("{id:int}")]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
     public async Task<ActionResult<AnimalResponseDto>> Update(int id, UpdateAnimalDto dto, CancellationToken cancellationToken)
     {
         var animal = await animalService.UpdateAsync(id, dto, cancellationToken);

@@ -14,7 +14,7 @@ const enumValues: Record<EnumName, Array<string>> = {
   ReportType: ['Sighting', 'Injury', 'CollarIssue', 'PoachingSigns', 'HabitatIssue', 'Emergency', 'Other'],
   Severity: ['Low', 'Medium', 'High', 'Critical'],
   AlertType: ['NoMovement', 'LeftSafeZone', 'CollarBatteryLow', 'CollarSignalLost', 'Manual', 'Other'],
-  UserRole: ['Ranger', 'Researcher', 'Admin']
+  UserRole: ['Ranger', 'Researcher', 'Admin', 'Master']
 };
 
 const enumLabels: Record<string, string> = {
@@ -48,7 +48,8 @@ const enumLabels: Record<string, string> = {
   CollarSignalLost: 'Collar signal lost',
   Ranger: 'Ranger',
   Researcher: 'Researcher',
-  Admin: 'Admin'
+  Admin: 'Admin',
+  Master: 'Master'
 };
 
 export function enumKey(value: unknown, enumName?: EnumName): string {

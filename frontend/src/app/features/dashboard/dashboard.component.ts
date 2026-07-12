@@ -32,6 +32,7 @@ import { AnimalTrackingSignalRService } from '../../core/services/animal-trackin
 import { CollarApiService } from '../../core/services/collar-api.service';
 import { LocationPointApiService } from '../../core/services/location-point-api.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { enumEquals, enumKey } from '../../core/utils/enum-utils';
 
 @Component({
@@ -54,6 +55,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private map?: L.Map;
   private markers = new Map<number, L.Marker>();
   private mapResizeFrame?: number;
+  private hasAppliedInitialMapView = false;
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -63,6 +65,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private readonly rangerReportApi: RangerReportApiService,
     private readonly alertApi: AlertApiService,
     private readonly animalTrackingSignalR: AnimalTrackingSignalRService,
+    private readonly authService: AuthService,
     private ngZone: NgZone,
   ) {}
 
@@ -174,6 +177,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     return forkJoin({
+      currentUser: this.authService.refreshCurrentUser(),
       animals: this.animalApi.getAll(),
       collars: this.collarApi.getAll(),
       latestLocations: this.locationPointApi.getLatest(),
@@ -195,6 +199,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     latestLocations: Array<LocationPoint>;
     reports: Array<RangerReport>;
     alerts: Array<Alert>;
+    currentUser: unknown;
   }): void {
     this.animals = result.animals;
     this.collars = result.collars;
@@ -203,7 +208,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.alerts = result.alerts;
 
     this.renderMarkers(this.mapLocations);
-    this.fitToCurrentLocations();
+    this.applyInitialMapView();
   }
 
   private handleLocationPointReceived(locationPoint: LocationPointReceived): void {
@@ -249,6 +254,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.mapResizeFrame = requestAnimationFrame(() => {
       this.map?.invalidateSize();
+      this.applyInitialMapView();
       this.mapResizeFrame = undefined;
     });
   }
@@ -339,6 +345,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       maxZoom: 14,
     });
   }
+
+  private applyInitialMapView(): void {
+    if (!this.map || this.hasAppliedInitialMapView) {
+      return;
+    }
+
+    if (this.centerMapOnAssignedArea()) {
+      this.hasAppliedInitialMapView = true;
+      return;
+    }
+
+    if (!this.mapLocations.length) {
+      return;
+    }
+
+    this.fitToCurrentLocations();
+    this.hasAppliedInitialMapView = true;
+  }
+
   private isValidLocation(point: LocationPoint): boolean {
     return (
       typeof point.latitude === 'number' &&
@@ -378,15 +403,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     return 'signal-old';
   }
-  private centerMapOnAssignedArea(): void {
-    if (!this.map) return;
+  private centerMapOnAssignedArea(): boolean {
+    const currentUser = this.authService.currentUser;
 
-    const assignedArea = {
-      latitude: 44.7866,
-      longitude: 20.4489,
-      radiusMeters: 2000,
-    };
+    if (
+      !this.map ||
+      !currentUser ||
+      currentUser.assignedLatitude === null ||
+      currentUser.assignedLatitude === undefined ||
+      currentUser.assignedLongitude === null ||
+      currentUser.assignedLongitude === undefined
+    ) {
+      return false;
+    }
 
-    this.map.setView([assignedArea.latitude, assignedArea.longitude], 14);
+    this.map.setView(
+      [currentUser.assignedLatitude, currentUser.assignedLongitude],
+      currentUser.assignedMapZoom ?? 11,
+    );
+    return true;
   }
 }

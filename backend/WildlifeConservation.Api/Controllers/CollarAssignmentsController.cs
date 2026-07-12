@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/collar-assignments")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
 public class CollarAssignmentsController(ICollarAssignmentService collarAssignmentService, IMapper mapper) : ControllerBase
 {
     [HttpGet("active")]

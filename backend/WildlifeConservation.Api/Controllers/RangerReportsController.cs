@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/ranger-reports")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
 public class RangerReportsController(IRangerReportService rangerReportService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -21,9 +22,10 @@ public class RangerReportsController(IRangerReportService rangerReportService, I
     }
 
     [HttpPost]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
     public async Task<ActionResult<RangerReportResponseDto>> Create(CreateRangerReportDto dto, CancellationToken cancellationToken)
     {
-        var created = mapper.Map<RangerReportResponseDto>(await rangerReportService.CreateAsync(dto, cancellationToken));
+        var created = mapper.Map<RangerReportResponseDto>(await rangerReportService.CreateAsync(dto, User.GetCurrentUserId(), cancellationToken));
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 }

@@ -1,0 +1,35 @@
+<main class="login-page">
+  <section class="login-card">
+    <img class="login-logo" src="assets/logo/logo_light-blank.svg" alt="WildTrack" />
+    <div class="login-heading">
+      <h1>WildTrack</h1>
+      <p>Sign in to monitor wildlife movement and field activity.</p>
+    </div>
+
+    <form class="form-grid" [formGroup]="loginForm" (ngSubmit)="login()">
+      <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" autocomplete="email" formControlName="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" autocomplete="current-password" formControlName="password" />
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+
+    <div class="seed-users">
+      <strong>Seed users</strong>
+      <span>Admin: anika.admin@example.org / Admin123!</span>
+      <span>Ranger: maya.ranger@example.org / Ranger123!</span>
+      <span>Researcher: luka.research@example.org / Researcher123!</span>
+      <span>Promote a local user to Master to manage users.</span>
+    </div>
+  </section>
+</main>

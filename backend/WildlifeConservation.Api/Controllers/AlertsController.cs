@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/alerts")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
 public class AlertsController(IAlertService alertService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -21,13 +22,15 @@ public class AlertsController(IAlertService alertService, IMapper mapper) : Cont
     }
 
     [HttpPost]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
     public async Task<ActionResult<AlertResponseDto>> Create(CreateAlertDto dto, CancellationToken cancellationToken)
     {
-        var created = mapper.Map<AlertResponseDto>(await alertService.CreateAsync(dto, cancellationToken));
+        var created = mapper.Map<AlertResponseDto>(await alertService.CreateAsync(dto, User.GetCurrentUserId(), cancellationToken));
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}/resolve")]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
     public async Task<ActionResult<AlertResponseDto>> Resolve(int id, ResolveAlertDto dto, CancellationToken cancellationToken)
     {
         var alert = await alertService.ResolveAsync(id, dto, cancellationToken);

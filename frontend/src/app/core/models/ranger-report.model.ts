@@ -15,7 +15,6 @@ export interface RangerReport {
 
 export interface CreateRangerReportRequest {
   animalId: number | null;
-  userId: number;
   reportType: ReportType;
   severity: Severity;
   latitude: number;

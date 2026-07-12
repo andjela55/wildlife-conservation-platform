@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/species")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
 public class SpeciesController(ISpeciesService speciesService, IMapper mapper) : ControllerBase
 {
     [HttpGet]

@@ -23,16 +23,17 @@ public class RangerReportService(
             : report;
     }
 
-    public async Task<RangerReport> CreateAsync(CreateRangerReportDto dto, CancellationToken cancellationToken = default)
+    public async Task<RangerReport> CreateAsync(CreateRangerReportDto dto, int userId, CancellationToken cancellationToken = default)
     {
         if (dto.AnimalId.HasValue)
         {
             await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId.Value, cancellationToken), dto.AnimalId.Value, "Animal");
         }
 
-        await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(dto.UserId, cancellationToken), dto.UserId, "User");
+        await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(userId, cancellationToken), userId, "User");
 
         var report = mapper.Map<RangerReport>(dto);
+        report.UserId = userId;
         report.Description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
         report.CreatedAt = ServiceHelpers.AsUtc(dto.CreatedAt);
 

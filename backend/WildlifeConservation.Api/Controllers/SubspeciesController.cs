@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/subspecies")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
 public class SubspeciesController(ISubspeciesService subspeciesService, IMapper mapper) : ControllerBase
 {
     [HttpGet]

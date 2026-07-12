@@ -207,6 +207,21 @@ mat-form-field {
   background: transparent;
 }
 
+.mat-mdc-header-row {
+  height: 50px;
+}
+
+.mat-mdc-row {
+  min-height: 58px;
+}
+
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  border-bottom-color: rgba(45, 74, 64, 0.1);
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
 .mat-mdc-header-cell {
   color: var(--stone-500);
   font-size: 12px;

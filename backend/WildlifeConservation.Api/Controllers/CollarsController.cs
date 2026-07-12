@@ -4,6 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/collars")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
 public class CollarsController(ICollarService collarService, IMapper mapper) : ControllerBase
 {
     [HttpGet]

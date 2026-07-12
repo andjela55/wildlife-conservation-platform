@@ -1,0 +1,63 @@
+.login-page {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(7, 40, 30, 0.9), rgba(23, 66, 48, 0.56)),
+    url("/assets/images/jungle2.jpg") left center / cover no-repeat;
+  display: grid;
+  justify-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-card {
+  background: rgba(250, 249, 242, 0.96);
+  border: 1px solid rgba(243, 234, 216, 0.46);
+  border-radius: 18px;
+  box-shadow: 0 28px 80px rgba(4, 25, 19, 0.28);
+  display: grid;
+  gap: 18px;
+  max-width: 430px;
+  padding: 28px;
+  width: min(100%, 430px);
+}
+
+.login-logo {
+  height: 76px;
+  object-fit: contain;
+  object-position: left center;
+  width: 132px;
+}
+
+.login-heading h1 {
+  color: var(--forest-950);
+  font-size: 34px;
+  margin: 0;
+}
+
+.login-heading p {
+  color: var(--stone-500);
+  margin: 6px 0 0;
+}
+
+.seed-users {
+  border-top: 1px solid var(--line);
+  color: var(--stone-500);
+  display: grid;
+  font-size: 12px;
+  gap: 5px;
+  padding-top: 14px;
+}
+
+.seed-users strong {
+  color: var(--forest-800);
+}
+
+@media (max-width: 560px) {
+  .login-page {
+    padding: 14px;
+  }
+
+  .login-card {
+    padding: 22px;
+  }
+}

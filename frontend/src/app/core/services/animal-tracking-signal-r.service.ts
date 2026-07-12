@@ -3,6 +3,7 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } fro
 import { BehaviorSubject, defer, from, map, Observable, of, Subject, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocationPointReceived } from '../models';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalTrackingSignalRService implements OnDestroy {
@@ -12,6 +13,8 @@ export class AnimalTrackingSignalRService implements OnDestroy {
 
   readonly locationPointReceived$ = this.locationPointReceivedSubject.asObservable();
   readonly isConnected$ = this.isConnectedSubject.asObservable();
+
+  constructor(private readonly authService: AuthService) {}
 
   start(): Observable<void> {
     return defer(() => {
@@ -55,7 +58,9 @@ export class AnimalTrackingSignalRService implements OnDestroy {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/animal-tracking-hub`, { withCredentials: false })
+      .withUrl(`${environment.apiUrl}/animal-tracking-hub`, {
+        accessTokenFactory: () => this.authService.token ?? ''
+      })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Information)
       .build();

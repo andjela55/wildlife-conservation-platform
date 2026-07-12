@@ -4,9 +4,11 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/location-points")]
+[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
 public class LocationPointsController(ILocationPointService locationPointService, IMapper mapper) : ControllerBase
 {
     [HttpPost]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
     public async Task<ActionResult<LocationPointResponseDto>> Create(CreateLocationPointDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<LocationPointResponseDto>(await locationPointService.CreateAsync(dto, cancellationToken));

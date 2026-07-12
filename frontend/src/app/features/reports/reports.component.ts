@@ -4,7 +4,6 @@ import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
 import { Animal, CreateRangerReportRequest, PagedResult, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
-import { CurrentUserService } from '../../core/services/current-user.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 import { enumKey } from '../../core/utils/enum-utils';
@@ -43,7 +42,6 @@ export class ReportsComponent implements OnInit, OnDestroy {
   constructor(
     private readonly rangerReportApi: RangerReportApiService,
     private readonly animalApi: AnimalApiService,
-    private readonly currentUser: CurrentUserService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -144,7 +142,6 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const value = this.reportForm.getRawValue();
     return {
       animalId: value.animalId || null,
-      userId: this.currentUser.userId,
       reportType: value.reportType,
       severity: value.severity,
       latitude: value.latitude,

@@ -24,14 +24,10 @@ public class AlertService(
             : alert;
     }
 
-    public async Task<Alert> CreateAsync(CreateAlertDto dto, CancellationToken cancellationToken = default)
+    public async Task<Alert> CreateAsync(CreateAlertDto dto, int createdByUserId, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
-
-        if (dto.CreatedByUserId.HasValue)
-        {
-            await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(dto.CreatedByUserId.Value, cancellationToken), dto.CreatedByUserId.Value, "User");
-        }
+        await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(createdByUserId, cancellationToken), createdByUserId, "User");
 
         var createdAt = ServiceHelpers.AsUtc(dto.CreatedAt);
         var activeAssignment = await collarAssignmentRepository.Query()
@@ -44,6 +40,7 @@ public class AlertService(
 
         var alert = mapper.Map<Alert>(dto);
         alert.CollarId = activeAssignment?.CollarId;
+        alert.CreatedByUserId = createdByUserId;
         alert.Description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
         alert.IsResolved = false;
         alert.CreatedAt = createdAt;

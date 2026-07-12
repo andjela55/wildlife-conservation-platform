@@ -7,9 +7,6 @@ public record CreateRangerReportDto
 {
     public int? AnimalId { get; init; }
 
-    [Range(1, int.MaxValue)]
-    public int UserId { get; init; }
-
     public ReportType ReportType { get; init; } = ReportType.Other;
     public Severity Severity { get; init; } = Severity.Low;
 

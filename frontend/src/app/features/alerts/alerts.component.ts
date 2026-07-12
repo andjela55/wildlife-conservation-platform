@@ -6,7 +6,6 @@ import { Alert, alertTypeOptions, Animal, Collar, CollarAssignment, CreateAlertR
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
-import { CurrentUserService } from '../../core/services/current-user.service';
 import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 import { enumKey } from '../../core/utils/enum-utils';
 
@@ -45,7 +44,6 @@ export class AlertsComponent implements OnInit, OnDestroy {
     private readonly alertApi: AlertApiService,
     private readonly animalApi: AnimalApiService,
     private readonly collarApi: CollarApiService,
-    private readonly currentUser: CurrentUserService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
@@ -181,7 +179,6 @@ export class AlertsComponent implements OnInit, OnDestroy {
     const value = this.alertForm.getRawValue();
     return {
       animalId: value.animalId,
-      createdByUserId: this.currentUser.userId,
       alertType: value.alertType,
       severity: value.severity,
       description: value.description,

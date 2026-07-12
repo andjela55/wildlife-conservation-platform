@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using WildlifeConservation.Api;
 using WildlifeConservation.Api.Hubs;
@@ -31,12 +32,37 @@ builder.Services.AddCors(options =>
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // DI
 builder.Services.AddRepositoryLayer(builder.Configuration);
 builder.Services.AddServiceLayer();
-builder.Services.AddApiLayer();
+builder.Services.AddApiLayer(builder.Configuration);
 builder.Services.AddAutoMapper(_ => { }, typeof(ApiAssemblyMarker).Assembly);
 
 var app = builder.Build();
@@ -56,12 +82,13 @@ app.UseRouting();
 
 app.UseCors("DevCors");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ServiceExceptionMiddleware>();
 
 app.MapControllers();
-app.MapHub<AnimalTrackingHub>("/animal-tracking-hub");
+app.MapHub<AnimalTrackingHub>("/animal-tracking-hub").RequireAuthorization();
 
 if (app.Environment.IsDevelopment())
 {

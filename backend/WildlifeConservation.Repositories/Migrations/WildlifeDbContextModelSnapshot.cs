@@ -740,6 +740,21 @@ namespace WildlifeConservation.Repositories.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AssignedLocationName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<decimal?>("AssignedLatitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("numeric(9,6)");
+
+                    b.Property<decimal?>("AssignedLongitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("numeric(9,6)");
+
+                    b.Property<int?>("AssignedMapZoom")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -752,6 +767,16 @@ namespace WildlifeConservation.Repositories.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordSalt")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
@@ -770,6 +795,8 @@ namespace WildlifeConservation.Repositories.Migrations
                             Email = "maya.ranger@example.org",
                             FullName = "Maya Nkosi",
                             IsActive = true,
+                            PasswordHash = "lqAUSV0CyDeazcHyVWUyWOaBpl2tKJEcNMt8NLu6OmY=",
+                            PasswordSalt = "UmFuZ2VyU2VlZFNhbHQxMjM=",
                             Role = 0
                         },
                         new
@@ -778,6 +805,8 @@ namespace WildlifeConservation.Repositories.Migrations
                             Email = "luka.research@example.org",
                             FullName = "Luka Petrovic",
                             IsActive = true,
+                            PasswordHash = "BeTAbhUpC/HalIdpn4pENMoRhM6MTo8l1G0pP/IqoqI=",
+                            PasswordSalt = "UmVzZWFyY2hTZWVkU2FsdDE=",
                             Role = 1
                         },
                         new
@@ -786,6 +815,8 @@ namespace WildlifeConservation.Repositories.Migrations
                             Email = "anika.admin@example.org",
                             FullName = "Anika Rao",
                             IsActive = true,
+                            PasswordHash = "S17Qn4Xrpy+dcZCVD5zuHuq4t32wjdBDGTSMzxjSDLY=",
+                            PasswordSalt = "QWRtaW5TZWVkU2FsdDEyMw==",
                             Role = 2
                         });
                 });

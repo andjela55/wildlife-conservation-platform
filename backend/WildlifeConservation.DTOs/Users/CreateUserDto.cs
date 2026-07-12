@@ -1,0 +1,36 @@
+using System.ComponentModel.DataAnnotations;
+using WildlifeConservation.Shared.Enums;
+
+namespace WildlifeConservation.DTOs;
+
+public record CreateUserDto
+{
+    [Required]
+    [StringLength(160)]
+    public string FullName { get; init; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    [StringLength(200)]
+    public string Email { get; init; } = string.Empty;
+
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    public string Password { get; init; } = string.Empty;
+
+    public UserRole Role { get; init; } = UserRole.Ranger;
+
+    public bool IsActive { get; init; } = true;
+
+    [StringLength(160)]
+    public string? AssignedLocationName { get; init; }
+
+    [Range(-90, 90)]
+    public decimal? AssignedLatitude { get; init; }
+
+    [Range(-180, 180)]
+    public decimal? AssignedLongitude { get; init; }
+
+    [Range(1, 18)]
+    public int? AssignedMapZoom { get; init; }
+}
