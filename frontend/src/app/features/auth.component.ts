@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Route, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { AuthenticatedUser, UserRole, UserRoles } from '../core/models';
+import { AppNavigationRoute } from '../app-route-definitions';
+import { AuthenticatedUser } from '../core/models';
 import { AuthService } from '../core/services/auth.service';
 
 @Component({
@@ -12,75 +13,38 @@ import { AuthService } from '../core/services/auth.service';
 export class AuthComponent {
   isSidebarCollapsed = false;
   readonly currentUser$: Observable<AuthenticatedUser | null>;
-  readonly navigationItems: Array<{
-    label: string;
-    route: string;
-    icon: string;
-    exact?: boolean;
-    roles: Array<UserRole>;
-  }> = [
-    {
-      label: 'Dashboard',
-      route: '/',
-      icon: 'assets/icons/home.svg',
-      exact: true,
-      roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
-    },
-    {
-      label: 'Animals',
-      route: '/animals',
-      icon: 'assets/icons/paw.svg',
-      roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
-    },
-    {
-      label: 'Species',
-      route: '/species',
-      icon: 'assets/icons/category.svg',
-      roles: [UserRoles.Admin, UserRoles.Researcher]
-    },
-    {
-      label: 'Reports',
-      route: '/reports',
-      icon: 'assets/icons/report.svg',
-      roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
-    },
-    {
-      label: 'Alerts',
-      route: '/alerts',
-      icon: 'assets/icons/alert.svg',
-      roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
-    },
-    {
-      label: 'Collars',
-      route: '/collars',
-      icon: 'assets/icons/collar.svg',
-      roles: [UserRoles.Admin, UserRoles.Researcher]
-    },
-    {
-      label: 'Users',
-      route: '/users',
-      icon: 'assets/icons/category.svg',
-      roles: [UserRoles.Master]
-    }
-  ];
+  readonly navigationItems: Array<AppNavigationRoute>;
 
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router
   ) {
     this.currentUser$ = this.authService.currentUser$;
+    this.navigationItems = this.getNavigationItems();
   }
 
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
-  canShowNavigationItem(item: { roles: Array<UserRole> }): boolean {
-    return this.authService.hasAnyRole(item.roles);
+  canShowNavigationItem(item: AppNavigationRoute): boolean {
+    return this.authService.hasAnyRole(item.Roles);
   }
 
   logout(): void {
     this.authService.logout();
     void this.router.navigate(['/login']);
+  }
+
+  private getNavigationItems(): Array<AppNavigationRoute> {
+    const authenticatedRoute = this.router.config.find((route) => route.component === AuthComponent);
+
+    return (authenticatedRoute?.children ?? [])
+      .map((route) => this.getNavigationItem(route))
+      .filter((item): item is AppNavigationRoute => !!item);
+  }
+
+  private getNavigationItem(route: Route): AppNavigationRoute | null {
+    return route.data?.['navigation'] as AppNavigationRoute | null;
   }
 }

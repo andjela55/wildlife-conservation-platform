@@ -18,13 +18,13 @@
       <a
         *ngFor="let item of navigationItems"
         [hidden]="!canShowNavigationItem(item)"
-        [routerLink]="item.route"
+        [routerLink]="item.Link"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: item.exact === true }"
-        [attr.title]="isSidebarCollapsed ? item.label : null"
+        [routerLinkActiveOptions]="{ exact: item.Exact === true }"
+        [attr.title]="isSidebarCollapsed ? item.Label : null"
       >
-        <img class="nav-icon" [src]="item.icon" alt="" />
-        <span class="nav-label">{{ item.label }}</span>
+        <img class="nav-icon" [src]="item.Icon" alt="" />
+        <span class="nav-label">{{ item.Label }}</span>
       </a>
     </nav>
 
