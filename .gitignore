@@ -39,3 +39,6 @@ artifacts/
 *.user
 *.suo
 TestResults/
+
+# Local ESP8266 credentials
+hardware/esp8266-collar/include/secrets.h

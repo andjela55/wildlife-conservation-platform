@@ -10,6 +10,8 @@ The repo now contains the .NET backend and an Angular frontend. Authentication, 
   - .NET 8 Web API solution and library projects.
 - `frontend/`
   - Angular app using NgModules, routing, and reactive forms.
+- `hardware/esp8266-collar/`
+  - PlatformIO ESP8266 NodeMCU collar signal simulator.
 
 ## Backend Stack
 
@@ -130,6 +132,9 @@ http://localhost:4200
 ```
 
 The frontend uses `frontend/proxy.conf.json` to send `/api` requests to `http://localhost:5191`.
+
+ESP8266 collar setup, LAN binding, and device-key configuration are documented
+in `hardware/esp8266-collar/README.md`.
 
 ## Build And Test
 

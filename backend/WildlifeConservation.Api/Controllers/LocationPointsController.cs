@@ -4,11 +4,10 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/location-points")]
-[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
 public class LocationPointsController(ILocationPointService locationPointService, IMapper mapper) : ControllerBase
 {
     [HttpPost]
-    [AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
+    [AuthorizeDeviceOrRoles(UserRole.Admin, UserRole.Researcher)]
     public async Task<ActionResult<LocationPointResponseDto>> Create(CreateLocationPointDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<LocationPointResponseDto>(await locationPointService.CreateAsync(dto, cancellationToken));
@@ -16,6 +15,7 @@ public class LocationPointsController(ILocationPointService locationPointService
     }
 
     [HttpGet("latest")]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
     public async Task<ActionResult<PagedResult<LocationPointResponseDto>>> GetLatest([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
         var locations = await locationPointService.GetLatestAsync(pagination, cancellationToken);
@@ -23,6 +23,7 @@ public class LocationPointsController(ILocationPointService locationPointService
     }
 
     [HttpGet("by-animal/{animalId:int}")]
+    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
     public async Task<ActionResult<PagedResult<LocationPointResponseDto>>> GetByAnimal(int animalId, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
         var locations = await locationPointService.GetByAnimalAsync(animalId, pagination, cancellationToken);
