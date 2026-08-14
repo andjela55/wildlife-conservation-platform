@@ -63,7 +63,6 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddRepositoryLayer(builder.Configuration);
 builder.Services.AddServiceLayer();
 builder.Services.AddApiLayer(builder.Configuration);
-builder.Services.AddAutoMapper(_ => { }, typeof(ApiAssemblyMarker).Assembly);
 
 var app = builder.Build();
 

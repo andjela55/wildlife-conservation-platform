@@ -1,11 +1,9 @@
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using WildlifeConservation.Api.Auth;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 using WildlifeConservation.Api.Realtime;
-using WildlifeConservation.Services.LocationPoints;
 
 namespace WildlifeConservation.Api;
 
@@ -13,6 +11,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApiLayer(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
+
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

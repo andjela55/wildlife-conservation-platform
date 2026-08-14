@@ -20,7 +20,6 @@ The animated preview and screenshots are available in [`media/`](media/).
 
 ## Live Tracking Flow
 
-text
 ESP8266 collar simulator
 → HTTP POST /api/location-points
 → .NET 8 Web API
@@ -75,7 +74,6 @@ ESP8266 collar simulator
 
 ## Repository Structure
 
-text
 backend/                    .NET solution, API, domain layers, and tests
 frontend/                   Angular dashboard
 hardware/esp8266-collar/    PlatformIO collar simulator
@@ -101,7 +99,7 @@ The MVP uses JWT bearer authentication. Roles are represented by the `UserRole` 
 
 The primary application roles are `Admin`, `Ranger`, and `Researcher`. Seeded accounts for all three roles are included for local testing, with their development-only credentials defined in `UserConfiguration`. A `Master` role is also present for restricted user-management operations.
 
-The SignalR hub requires a valid JWT. Collar submissions can use either an authorized user token or the separately configured device API key.
+The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/location-points` also accepts an `X-Device-Key` header. This represents device-level collar authentication without requiring the ESP8266 simulator to obtain and refresh a user JWT. The location-point read endpoints continue to require an authenticated application user.
 
 ## Backend Solution Structure
 
@@ -163,7 +161,6 @@ Configure local settings through .NET user-secrets or environment variables. Do 
 
 powershell
 cd WildlifeConservation.Api
-dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Host=localhost;Port=5432;Database=wildlife_conservation;Username=YOUR_USERNAME;Password=YOUR_PASSWORD'
 dotnet user-secrets set 'Jwt:Key' 'replace-with-a-long-random-development-secret'
 dotnet user-secrets set 'DeviceApiKey' 'replace-with-a-separate-random-device-key'
 cd ..
@@ -183,7 +180,6 @@ dotnet run --project WildlifeConservation.Api\WildlifeConservation.Api.csproj
 
 Swagger:
 
-text
 http://localhost:5191/swagger
 https://localhost:7246/swagger
 
