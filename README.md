@@ -163,7 +163,7 @@ Configure local settings through .NET user-secrets or environment variables. Do 
 
 powershell
 cd WildlifeConservation.Api
-dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Host=localhost;Port=5432;Database=wildlife_conservation;Username=postgres;Password=postgres'
+dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Host=localhost;Port=5432;Database=wildlife_conservation;Username=YOUR_USERNAME;Password=YOUR_PASSWORD'
 dotnet user-secrets set 'Jwt:Key' 'replace-with-a-long-random-development-secret'
 dotnet user-secrets set 'DeviceApiKey' 'replace-with-a-separate-random-device-key'
 cd ..
