@@ -5,22 +5,13 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService, IJwtTokenService jwtTokenService) : ControllerBase
+public class AuthController(IAuthService authService, IJwtTokenService jwtTokenService, IMapper mapper) : ControllerBase
 {
-    [Authorize]
     [HttpGet("current-user")]
     public async Task<ActionResult<CurrentUserResponseDto>> GetCurrentUser(CancellationToken cancellationToken)
     {
         var user = await authService.GetCurrentUserAsync(User.GetCurrentUserId(), cancellationToken);
-        return Ok(new CurrentUserResponseDto(
-            user.Id,
-            user.FullName,
-            user.Email,
-            user.Role,
-            user.AssignedLocationName,
-            user.AssignedLatitude,
-            user.AssignedLongitude,
-            user.AssignedMapZoom));
+        return Ok(mapper.Map<CurrentUserResponseDto>(user));
     }
 
     [AllowAnonymous]

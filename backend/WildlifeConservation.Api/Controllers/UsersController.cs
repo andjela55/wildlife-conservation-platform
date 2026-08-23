@@ -5,7 +5,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
-[AuthorizeRoles(UserRole.Master)]
+[Permission(PermissionCode.UsersWrite)]
 public class UsersController(IUserService userService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -20,6 +20,12 @@ public class UsersController(IUserService userService, IMapper mapper) : Control
     {
         var created = mapper.Map<UserResponseDto>(await userService.CreateAsync(dto, cancellationToken));
         return CreatedAtAction(nameof(GetAll), new { id = created.Id }, created);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<UserResponseDto>> Update(int id, UpdateUserDto dto, CancellationToken cancellationToken)
+    {
+        return Ok(mapper.Map<UserResponseDto>(await userService.UpdateAsync(id, dto, cancellationToken)));
     }
 
     [HttpPut("{id:int}/assigned-area")]

@@ -30,8 +30,6 @@ public class LocationPointService(
         }
 
         var locationPoint = mapper.Map<LocationPoint>(dto);
-        locationPoint.RecordedAt = recordedAt;
-        locationPoint.Notes = dto.Notes?.Trim();
 
         locationPoint = await locationPointRepository.InsertAsync(locationPoint, cancellationToken);
         await locationPointNotificationService.NotifyLocationPointCreatedAsync(locationPoint, animal, collar, cancellationToken);

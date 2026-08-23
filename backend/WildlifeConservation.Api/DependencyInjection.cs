@@ -47,6 +47,7 @@ public static class DependencyInjection
                 };
             });
         services.AddAuthorization();
+        services.AddScoped<IAuthorizationHandler, CurrentUserPermissionAuthorizationHandler>();
 
         services.AddSignalR()
             .AddJsonProtocol(options =>

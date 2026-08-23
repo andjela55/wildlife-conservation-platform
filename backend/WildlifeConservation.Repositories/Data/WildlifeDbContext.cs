@@ -13,6 +13,10 @@ public class WildlifeDbContext(DbContextOptions<WildlifeDbContext> options) : Db
     public DbSet<RangerReport> RangerReports => Set<RangerReport>();
     public DbSet<Alert> Alerts => Set<Alert>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

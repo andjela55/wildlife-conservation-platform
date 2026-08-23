@@ -4,7 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/ranger-reports")]
-[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
+[Permission(PermissionCode.RangerReportsRead)]
 public class RangerReportsController(IRangerReportService rangerReportService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -22,10 +22,17 @@ public class RangerReportsController(IRangerReportService rangerReportService, I
     }
 
     [HttpPost]
-    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
+    [Permission(PermissionCode.RangerReportsWrite)]
     public async Task<ActionResult<RangerReportResponseDto>> Create(CreateRangerReportDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<RangerReportResponseDto>(await rangerReportService.CreateAsync(dto, User.GetCurrentUserId(), cancellationToken));
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
+    [HttpGet("by-animal/{animalId:int}")]
+    public async Task<ActionResult<PagedResult<RangerReportResponseDto>>> GetByAnimal(int animalId, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
+    {
+        var reports = await rangerReportService.GetByAnimalAsync(animalId, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<RangerReport, RangerReportResponseDto>(reports));
     }
 }

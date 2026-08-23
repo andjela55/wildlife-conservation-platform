@@ -20,5 +20,4 @@ public record CreateRangerReportDto
     [StringLength(2000)]
     public string Description { get; init; } = string.Empty;
 
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }

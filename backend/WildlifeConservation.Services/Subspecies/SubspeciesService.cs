@@ -22,12 +22,12 @@ public class SubspeciesService(
             : subspecies;
     }
 
-    public async Task<Models.Subspecies.Subspecies> CreateAsync(CreateSubspeciesDto dto, CancellationToken cancellationToken = default)
+    public async Task<Models.Subspecies.Subspecies> CreateAsync(UpsertSubspeciesDto dto, CancellationToken cancellationToken = default)
     {
         await ServiceHelpers.EnsureFoundAsync(speciesRepository.GetByIdAsync(dto.SpeciesId, cancellationToken), dto.SpeciesId, "Species");
 
         var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        var description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
 
         var duplicate = await subspeciesRepository.Query()
             .AnyAsync(x => x.SpeciesId == dto.SpeciesId && x.Name.ToLower() == name.ToLower(), cancellationToken);
@@ -38,11 +38,28 @@ public class SubspeciesService(
         }
 
         var subspecies = mapper.Map<Models.Subspecies.Subspecies>(dto);
-        subspecies.Name = name;
-        subspecies.Description = description;
 
         subspecies = await subspeciesRepository.InsertAsync(subspecies, cancellationToken);
 
         return subspecies;
+    }
+
+    public async Task<Models.Subspecies.Subspecies> UpdateAsync(int id, UpsertSubspeciesDto dto, CancellationToken cancellationToken = default)
+    {
+        var subspecies = await subspeciesRepository.GetByIdAsync(id, cancellationToken)
+            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Subspecies with id {id} was not found.");
+        await ServiceHelpers.EnsureFoundAsync(speciesRepository.GetByIdAsync(dto.SpeciesId, cancellationToken), dto.SpeciesId, "Species");
+        var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+
+        var duplicate = await subspeciesRepository.Query()
+            .AnyAsync(x => x.Id != id && x.SpeciesId == dto.SpeciesId && x.Name.ToLower() == name.ToLower(), cancellationToken);
+        if (duplicate)
+        {
+            throw new ServiceException((int)HttpStatusCode.BadRequest, $"Subspecies '{name}' already exists for this species.");
+        }
+
+        mapper.Map(dto, subspecies);
+        return await subspeciesRepository.UpdateAsync(subspecies, cancellationToken);
     }
 }

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WildlifeConservation.DTOs;
 
-public record CreateSpeciesDto
+public record UpsertSpeciesDto
 {
     [Required]
     [StringLength(120)]

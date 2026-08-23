@@ -15,6 +15,13 @@ public abstract class BaseRepository<TEntity>
         DbSet = dbContext.Set<TEntity>();
     }
 
+    protected DbSet<T> Set<T>() where T : class => dbContext.Set<T>();
+
+    protected Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        dbContext.SaveChangesAsync(cancellationToken);
+
+    protected void ClearTracking() => dbContext.ChangeTracker.Clear();
+
     public IQueryable<TEntity> Query() => DbSet.AsNoTracking().AsQueryable();
 
     public async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)

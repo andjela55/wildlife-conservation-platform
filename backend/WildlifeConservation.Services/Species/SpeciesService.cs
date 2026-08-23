@@ -19,10 +19,10 @@ public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper
             : species;
     }
 
-    public async Task<Models.Species.Species> CreateAsync(CreateSpeciesDto dto, CancellationToken cancellationToken = default)
+    public async Task<Models.Species.Species> CreateAsync(UpsertSpeciesDto dto, CancellationToken cancellationToken = default)
     {
         var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        var description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
 
         var duplicate = await speciesRepository.Query()
             .AnyAsync(x => x.Name.ToLower() == name.ToLower(), cancellationToken);
@@ -33,11 +33,27 @@ public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper
         }
 
         var species = mapper.Map<Models.Species.Species>(dto);
-        species.Name = name;
-        species.Description = description;
 
         species = await speciesRepository.InsertAsync(species, cancellationToken);
 
         return species;
+    }
+
+    public async Task<Models.Species.Species> UpdateAsync(int id, UpsertSpeciesDto dto, CancellationToken cancellationToken = default)
+    {
+        var species = await speciesRepository.GetByIdAsync(id, cancellationToken)
+            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Species with id {id} was not found.");
+        var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+
+        var duplicate = await speciesRepository.Query()
+            .AnyAsync(x => x.Id != id && x.Name.ToLower() == name.ToLower(), cancellationToken);
+        if (duplicate)
+        {
+            throw new ServiceException((int)HttpStatusCode.BadRequest, $"Species '{name}' already exists.");
+        }
+
+        mapper.Map(dto, species);
+        return await speciesRepository.UpdateAsync(species, cancellationToken);
     }
 }

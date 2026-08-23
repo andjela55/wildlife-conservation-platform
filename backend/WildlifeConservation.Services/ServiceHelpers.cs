@@ -2,19 +2,11 @@ namespace WildlifeConservation.Services;
 
 internal static class ServiceHelpers
 {
-    public static DateTime AsUtc(DateTime value)
-    {
-        return value.Kind switch
-        {
-            DateTimeKind.Utc => value,
-            DateTimeKind.Local => value.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
-        };
-    }
+    public static DateTime AsUtc(DateTime value) => InputNormalization.AsUtc(value);
 
     public static DateTime? AsUtc(DateTime? value)
     {
-        return value.HasValue ? AsUtc(value.Value) : null;
+        return InputNormalization.AsUtc(value);
     }
 
     public static string RequiredText(string value, string fieldName)

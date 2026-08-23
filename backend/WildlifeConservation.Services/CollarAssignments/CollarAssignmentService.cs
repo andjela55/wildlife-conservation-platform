@@ -7,6 +7,38 @@ public class CollarAssignmentService(
     ITransactionService transactionService,
     IMapper mapper) : ICollarAssignmentService
 {
+    public async Task<PagedResult<CollarAssignment>> GetAllAsync(CollarAssignmentQuery query, CancellationToken cancellationToken = default)
+    {
+        if (query.AssignedFrom.HasValue && query.AssignedTo.HasValue && query.AssignedFrom > query.AssignedTo)
+        {
+            throw new ServiceException((int)HttpStatusCode.BadRequest, "AssignedFrom cannot be later than AssignedTo.");
+        }
+
+        var assignments = collarAssignmentRepository.Query();
+        if (query.AnimalId.HasValue)
+        {
+            assignments = assignments.Where(x => x.AnimalId == query.AnimalId.Value);
+        }
+        if (query.AssignedFrom.HasValue)
+        {
+            var assignedFrom = ServiceHelpers.AsUtc(query.AssignedFrom.Value);
+            assignments = assignments.Where(x => x.AssignedAt >= assignedFrom);
+        }
+        if (query.AssignedTo.HasValue)
+        {
+            var assignedTo = ServiceHelpers.AsUtc(query.AssignedTo.Value);
+            assignments = assignments.Where(x => x.AssignedAt <= assignedTo);
+        }
+        if (query.ActiveOnly.HasValue)
+        {
+            assignments = query.ActiveOnly.Value
+                ? assignments.Where(x => x.UnassignedAt == null)
+                : assignments.Where(x => x.UnassignedAt != null);
+        }
+
+        return await assignments.OrderByDescending(x => x.AssignedAt).ToPagedResultAsync(query, cancellationToken);
+    }
+
     public async Task<PagedResult<CollarAssignment>> GetActiveAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
         return await collarAssignmentRepository.Query()
@@ -45,9 +77,6 @@ public class CollarAssignmentService(
         }
 
         var assignment = mapper.Map<CollarAssignment>(dto);
-        assignment.AssignedAt = ServiceHelpers.AsUtc(dto.AssignedAt);
-        assignment.Reason = dto.Reason?.Trim();
-        assignment.Notes = dto.Notes?.Trim();
         collar.Status = CollarStatus.Assigned;
 
         return await transactionService.ExecuteAsync(async () =>

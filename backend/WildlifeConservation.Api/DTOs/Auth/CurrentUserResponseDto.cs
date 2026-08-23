@@ -1,12 +1,11 @@
-using WildlifeConservation.Shared.Enums;
-
 namespace WildlifeConservation.Api.DTOs.Auth;
 
 public record CurrentUserResponseDto(
     int Id,
     string FullName,
     string Email,
-    UserRole Role,
+    IReadOnlyCollection<RoleResponseDto> Roles,
+    IReadOnlyCollection<PermissionCode> Permissions,
     string? AssignedLocationName,
     decimal? AssignedLatitude,
     decimal? AssignedLongitude,

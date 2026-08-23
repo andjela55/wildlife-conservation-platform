@@ -22,23 +22,19 @@ public class CollarService(
             : collar;
     }
 
-    public async Task<Collar> CreateAsync(CreateCollarDto dto, CancellationToken cancellationToken = default)
+    public async Task<Collar> CreateAsync(UpsertCollarDto dto, CancellationToken cancellationToken = default)
     {
         var serialNumber = ServiceHelpers.RequiredText(dto.SerialNumber, nameof(dto.SerialNumber));
         await EnsureSerialNumberIsUniqueAsync(serialNumber, null, cancellationToken);
 
         var collar = mapper.Map<Collar>(dto);
-        collar.SerialNumber = serialNumber;
-        collar.Model = dto.Model?.Trim();
-        collar.Manufacturer = dto.Manufacturer?.Trim();
-        collar.Notes = dto.Notes?.Trim();
 
         collar = await collarRepository.InsertAsync(collar, cancellationToken);
 
         return collar;
     }
 
-    public async Task<Collar> UpdateAsync(int id, UpdateCollarDto dto, CancellationToken cancellationToken = default)
+    public async Task<Collar> UpdateAsync(int id, UpsertCollarDto dto, CancellationToken cancellationToken = default)
     {
         var collar = await collarRepository.GetByIdAsync(id, cancellationToken)
             ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Collar with id {id} was not found.");
@@ -55,10 +51,6 @@ public class CollarService(
         }
 
         mapper.Map(dto, collar);
-        collar.SerialNumber = serialNumber;
-        collar.Model = dto.Model?.Trim();
-        collar.Manufacturer = dto.Manufacturer?.Trim();
-        collar.Notes = dto.Notes?.Trim();
 
         collar = await collarRepository.UpdateAsync(collar, cancellationToken);
 

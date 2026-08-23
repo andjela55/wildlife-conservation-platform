@@ -4,7 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/collars")]
-[AuthorizeRoles(UserRole.Admin, UserRole.Researcher)]
+[Permission(PermissionCode.CollarsRead)]
 public class CollarsController(ICollarService collarService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -22,14 +22,16 @@ public class CollarsController(ICollarService collarService, IMapper mapper) : C
     }
 
     [HttpPost]
-    public async Task<ActionResult<CollarResponseDto>> Create(CreateCollarDto dto, CancellationToken cancellationToken)
+    [Permission(PermissionCode.CollarsWrite)]
+    public async Task<ActionResult<CollarResponseDto>> Create(UpsertCollarDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<CollarResponseDto>(await collarService.CreateAsync(dto, cancellationToken));
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<CollarResponseDto>> Update(int id, UpdateCollarDto dto, CancellationToken cancellationToken)
+    [Permission(PermissionCode.CollarsWrite)]
+    public async Task<ActionResult<CollarResponseDto>> Update(int id, UpsertCollarDto dto, CancellationToken cancellationToken)
     {
         var collar = await collarService.UpdateAsync(id, dto, cancellationToken);
         return Ok(mapper.Map<CollarResponseDto>(collar));

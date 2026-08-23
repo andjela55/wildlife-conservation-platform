@@ -18,6 +18,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.Email).IsUnique();
 
         const string adminSalt = "QWRtaW5TZWVkU2FsdDEyMw==";
+        const string masterSalt = "TWFzdGVyU2VlZFNhbHQxMjM=";
         const string rangerSalt = "UmFuZ2VyU2VlZFNhbHQxMjM=";
         const string researcherSalt = "UmVzZWFyY2hTZWVkU2FsdDE=";
 
@@ -29,7 +30,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 Email = "maya.ranger@example.org",
                 PasswordSalt = rangerSalt,
                 PasswordHash = PasswordHasher.HashPassword("Ranger123!", rangerSalt),
-                Role = UserRole.Ranger,
                 IsActive = true
             },
             new User
@@ -39,7 +39,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 Email = "luka.research@example.org",
                 PasswordSalt = researcherSalt,
                 PasswordHash = PasswordHasher.HashPassword("Researcher123!", researcherSalt),
-                Role = UserRole.Researcher,
                 IsActive = true
             },
             new User
@@ -49,7 +48,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 Email = "anika.admin@example.org",
                 PasswordSalt = adminSalt,
                 PasswordHash = PasswordHasher.HashPassword("Admin123!", adminSalt),
-                Role = UserRole.Admin,
+                IsActive = true
+            },
+            new User
+            {
+                Id = 4,
+                FullName = "Elena Markovic",
+                Email = "elena.master@example.org",
+                PasswordSalt = masterSalt,
+                PasswordHash = PasswordHasher.HashPassword("Master123!", masterSalt),
                 IsActive = true
             });
     }

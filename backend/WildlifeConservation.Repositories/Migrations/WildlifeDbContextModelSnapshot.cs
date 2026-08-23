@@ -732,6 +732,452 @@ namespace WildlifeConservation.Repositories.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WildlifeConservation.Models.Users.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Code")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = 0,
+                            Description = "View animals."
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = 1,
+                            Description = "Create and update animals."
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = 2,
+                            Description = "View alerts."
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = 3,
+                            Description = "Create and update alerts."
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = 4,
+                            Description = "View collars."
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = 5,
+                            Description = "Create and update collars."
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = 6,
+                            Description = "View collar assignments."
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = 7,
+                            Description = "Create and update collar assignments."
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = 8,
+                            Description = "View location points."
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = 9,
+                            Description = "Create and update location points."
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Code = 10,
+                            Description = "View ranger reports."
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Code = 11,
+                            Description = "Create and update ranger reports."
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Code = 12,
+                            Description = "View species."
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Code = 13,
+                            Description = "Create and update species."
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Code = 14,
+                            Description = "View subspecies."
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Code = 15,
+                            Description = "Create and update subspecies."
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Code = 16,
+                            Description = "View users."
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Code = 17,
+                            Description = "Create and update users."
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Code = 18,
+                            Description = "View roles."
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Code = 19,
+                            Description = "Create and update roles."
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Code = 20,
+                            Description = "Unrestricted platform access."
+                        });
+                });
+
+            modelBuilder.Entity("WildlifeConservation.Models.Users.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Field staff who record and maintain conservation data.",
+                            Name = "Ranger"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Read-only access to conservation data.",
+                            Name = "Researcher"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Platform administration and conservation data management.",
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Unrestricted platform administration.",
+                            Name = "Master"
+                        });
+                });
+
+            modelBuilder.Entity("WildlifeConservation.Models.Users.RolePermission", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolePermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 1
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 2
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 3
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 4
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 5
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 6
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 7
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 8
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 9
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 10
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 11
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 12
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 13
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 14
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 15
+                        },
+                        new
+                        {
+                            RoleId = 1,
+                            PermissionId = 16
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 1
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 3
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 5
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 7
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 9
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 11
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 13
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 15
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 1
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 2
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 3
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 4
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 5
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 6
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 7
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 8
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 9
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 10
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 11
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 12
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 13
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 14
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 15
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 16
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 17
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 18
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 19
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            PermissionId = 20
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            PermissionId = 21
+                        });
+                });
+
             modelBuilder.Entity("WildlifeConservation.Models.Users.User", b =>
                 {
                     b.Property<int>("Id")
@@ -740,13 +1186,13 @@ namespace WildlifeConservation.Repositories.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AssignedLocationName")
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
                     b.Property<decimal?>("AssignedLatitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("numeric(9,6)");
+
+                    b.Property<string>("AssignedLocationName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
 
                     b.Property<decimal?>("AssignedLongitude")
                         .HasPrecision(9, 6)
@@ -778,9 +1224,6 @@ namespace WildlifeConservation.Repositories.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -796,8 +1239,7 @@ namespace WildlifeConservation.Repositories.Migrations
                             FullName = "Maya Nkosi",
                             IsActive = true,
                             PasswordHash = "lqAUSV0CyDeazcHyVWUyWOaBpl2tKJEcNMt8NLu6OmY=",
-                            PasswordSalt = "UmFuZ2VyU2VlZFNhbHQxMjM=",
-                            Role = 0
+                            PasswordSalt = "UmFuZ2VyU2VlZFNhbHQxMjM="
                         },
                         new
                         {
@@ -806,8 +1248,7 @@ namespace WildlifeConservation.Repositories.Migrations
                             FullName = "Luka Petrovic",
                             IsActive = true,
                             PasswordHash = "BeTAbhUpC/HalIdpn4pENMoRhM6MTo8l1G0pP/IqoqI=",
-                            PasswordSalt = "UmVzZWFyY2hTZWVkU2FsdDE=",
-                            Role = 1
+                            PasswordSalt = "UmVzZWFyY2hTZWVkU2FsdDE="
                         },
                         new
                         {
@@ -816,8 +1257,53 @@ namespace WildlifeConservation.Repositories.Migrations
                             FullName = "Anika Rao",
                             IsActive = true,
                             PasswordHash = "S17Qn4Xrpy+dcZCVD5zuHuq4t32wjdBDGTSMzxjSDLY=",
-                            PasswordSalt = "QWRtaW5TZWVkU2FsdDEyMw==",
-                            Role = 2
+                            PasswordSalt = "QWRtaW5TZWVkU2FsdDEyMw=="
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Email = "elena.master@example.org",
+                            FullName = "Elena Markovic",
+                            IsActive = true,
+                            PasswordHash = "0dGX1Bj3IhmZb191BWpw4+oNtT3ldhTzq1qJTlcRj9k=",
+                            PasswordSalt = "TWFzdGVyU2VlZFNhbHQxMjM="
+                        });
+                });
+
+            modelBuilder.Entity("WildlifeConservation.Models.Users.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            RoleId = 2
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            RoleId = 3
+                        },
+                        new
+                        {
+                            UserId = 4,
+                            RoleId = 4
                         });
                 });
 
@@ -924,6 +1410,44 @@ namespace WildlifeConservation.Repositories.Migrations
                     b.Navigation("Species");
                 });
 
+            modelBuilder.Entity("WildlifeConservation.Models.Users.RolePermission", b =>
+                {
+                    b.HasOne("WildlifeConservation.Models.Users.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WildlifeConservation.Models.Users.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("WildlifeConservation.Models.Users.UserRole", b =>
+                {
+                    b.HasOne("WildlifeConservation.Models.Users.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WildlifeConservation.Models.Users.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("WildlifeConservation.Models.Animals.Animal", b =>
                 {
                     b.Navigation("Alerts");
@@ -954,11 +1478,25 @@ namespace WildlifeConservation.Repositories.Migrations
                     b.Navigation("Animals");
                 });
 
+            modelBuilder.Entity("WildlifeConservation.Models.Users.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("WildlifeConservation.Models.Users.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("WildlifeConservation.Models.Users.User", b =>
                 {
                     b.Navigation("Alerts");
 
                     b.Navigation("RangerReports");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

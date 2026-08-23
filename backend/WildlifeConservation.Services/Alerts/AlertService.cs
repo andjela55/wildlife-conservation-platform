@@ -29,7 +29,7 @@ public class AlertService(
         await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
         await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(createdByUserId, cancellationToken), createdByUserId, "User");
 
-        var createdAt = ServiceHelpers.AsUtc(dto.CreatedAt);
+        var createdAt = DateTime.UtcNow;
         var activeAssignment = await collarAssignmentRepository.Query()
             .Where(x =>
                 x.AnimalId == dto.AnimalId &&
@@ -41,7 +41,7 @@ public class AlertService(
         var alert = mapper.Map<Alert>(dto);
         alert.CollarId = activeAssignment?.CollarId;
         alert.CreatedByUserId = createdByUserId;
-        alert.Description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
         alert.IsResolved = false;
         alert.CreatedAt = createdAt;
 
@@ -72,5 +72,15 @@ public class AlertService(
         alert = await alertRepository.UpdateAsync(alert, cancellationToken);
 
         return alert;
+    }
+
+    public async Task<PagedResult<Alert>> GetByAnimalAsync(int animalId, PaginationQuery pagination, CancellationToken cancellationToken = default)
+    {
+        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(animalId, cancellationToken), animalId, "Animal");
+
+        return await alertRepository.Query()
+            .Where(x => x.AnimalId == animalId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 }

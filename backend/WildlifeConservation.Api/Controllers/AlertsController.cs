@@ -4,7 +4,7 @@ namespace WildlifeConservation.Api.Controllers;
 
 [ApiController]
 [Route("api/alerts")]
-[AuthorizeRoles(UserRole.Admin, UserRole.Ranger, UserRole.Researcher)]
+[Permission(PermissionCode.AlertsRead)]
 public class AlertsController(IAlertService alertService, IMapper mapper) : ControllerBase
 {
     [HttpGet]
@@ -22,7 +22,7 @@ public class AlertsController(IAlertService alertService, IMapper mapper) : Cont
     }
 
     [HttpPost]
-    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
+    [Permission(PermissionCode.AlertsWrite)]
     public async Task<ActionResult<AlertResponseDto>> Create(CreateAlertDto dto, CancellationToken cancellationToken)
     {
         var created = mapper.Map<AlertResponseDto>(await alertService.CreateAsync(dto, User.GetCurrentUserId(), cancellationToken));
@@ -30,10 +30,17 @@ public class AlertsController(IAlertService alertService, IMapper mapper) : Cont
     }
 
     [HttpPut("{id:int}/resolve")]
-    [AuthorizeRoles(UserRole.Admin, UserRole.Ranger)]
+    [Permission(PermissionCode.AlertsWrite)]
     public async Task<ActionResult<AlertResponseDto>> Resolve(int id, ResolveAlertDto dto, CancellationToken cancellationToken)
     {
         var alert = await alertService.ResolveAsync(id, dto, cancellationToken);
         return Ok(mapper.Map<AlertResponseDto>(alert));
+    }
+
+    [HttpGet("by-animal/{animalId:int}")]
+    public async Task<ActionResult<PagedResult<AlertResponseDto>>> GetByAnimal(int animalId, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
+    {
+        var alerts = await alertService.GetByAnimalAsync(animalId, pagination, cancellationToken);
+        return Ok(mapper.MapPagedResult<Alert, AlertResponseDto>(alerts));
     }
 }

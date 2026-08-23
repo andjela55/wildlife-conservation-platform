@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WildlifeConservation.Api\WildlifeConservation.Api.csproj" />
     <ProjectReference Include="..\WildlifeConservation.Services\WildlifeConservation.Services.csproj" />
     <ProjectReference Include="..\WildlifeConservation.Repositories\WildlifeConservation.Repositories.csproj" />
     <ProjectReference Include="..\WildlifeConservation.Models\WildlifeConservation.Models.csproj" />

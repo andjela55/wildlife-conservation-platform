@@ -34,11 +34,21 @@ public class RangerReportService(
 
         var report = mapper.Map<RangerReport>(dto);
         report.UserId = userId;
-        report.Description = ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
-        report.CreatedAt = ServiceHelpers.AsUtc(dto.CreatedAt);
+        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+        report.CreatedAt = DateTime.UtcNow;
 
         report = await rangerReportRepository.InsertAsync(report, cancellationToken);
 
         return report;
+    }
+
+    public async Task<PagedResult<RangerReport>> GetByAnimalAsync(int animalId, PaginationQuery pagination, CancellationToken cancellationToken = default)
+    {
+        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(animalId, cancellationToken), animalId, "Animal");
+
+        return await rangerReportRepository.Query()
+            .Where(x => x.AnimalId == animalId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToPagedResultAsync(pagination, cancellationToken);
     }
 }
