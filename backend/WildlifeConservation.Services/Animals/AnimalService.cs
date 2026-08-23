@@ -2,7 +2,7 @@ namespace WildlifeConservation.Services.Animals;
 
 public class AnimalService(
     IAnimalRepository animalRepository,
-    ISubspeciesRepository subspeciesRepository,
+    IAnimalValidationService validationService,
     IMapper mapper) : IAnimalService
 {
     public async Task<PagedResult<Animal>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
@@ -14,23 +14,14 @@ public class AnimalService(
 
     public async Task<Animal> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var animal = await animalRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return animal is null
-            ? throw new ServiceException((int)HttpStatusCode.NotFound, $"Animal with id {id} was not found.")
-            : animal;
+        return await validationService.GetRequiredAsync(id, cancellationToken);
     }
 
     public async Task<Animal> CreateAsync(UpsertAnimalDto dto, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(
-            subspeciesRepository.GetByIdAsync(dto.SubspeciesId, cancellationToken),
-            dto.SubspeciesId,
-            "Subspecies");
+        await validationService.ValidateUpsertAsync(dto, cancellationToken);
 
         var animal = mapper.Map<Animal>(dto);
-        ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
 
         animal = await animalRepository.InsertAsync(animal, cancellationToken);
 
@@ -39,16 +30,10 @@ public class AnimalService(
 
     public async Task<Animal> UpdateAsync(int id, UpsertAnimalDto dto, CancellationToken cancellationToken = default)
     {
-        var animal = await animalRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Animal with id {id} was not found.");
-
-        await ServiceHelpers.EnsureFoundAsync(
-            subspeciesRepository.GetByIdAsync(dto.SubspeciesId, cancellationToken),
-            dto.SubspeciesId,
-            "Subspecies");
+        var animal = await validationService.GetRequiredAsync(id, cancellationToken);
+        await validationService.ValidateUpsertAsync(dto, cancellationToken);
 
         mapper.Map(dto, animal);
-        ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
 
         animal = await animalRepository.UpdateAsync(animal, cancellationToken);
 

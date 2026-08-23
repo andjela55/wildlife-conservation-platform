@@ -19,7 +19,13 @@ public class ServiceExceptionMiddleware(RequestDelegate next)
             var problem = new
             {
                 type = "https://tools.ietf.org/html/rfc9110#section-15",
-                title = ex.StatusCode == StatusCodes.Status404NotFound ? "Not Found" : "Bad Request",
+                title = ex.StatusCode switch
+                {
+                    StatusCodes.Status401Unauthorized => "Unauthorized",
+                    StatusCodes.Status403Forbidden => "Forbidden",
+                    StatusCodes.Status404NotFound => "Not Found",
+                    _ => "Bad Request"
+                },
                 status = ex.StatusCode,
                 detail = ex.Message
             };

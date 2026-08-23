@@ -2,32 +2,13 @@ namespace WildlifeConservation.Services.LocationPoints;
 
 public class LocationPointService(
     ILocationPointRepository locationPointRepository,
-    IAnimalRepository animalRepository,
-    ICollarRepository collarRepository,
-    ICollarAssignmentRepository collarAssignmentRepository,
+    ILocationPointValidationService validationService,
     ILocationPointNotificationService locationPointNotificationService,
     IMapper mapper) : ILocationPointService
 {
     public async Task<LocationPoint> CreateAsync(CreateLocationPointDto dto, CancellationToken cancellationToken = default)
     {
-        var animal = await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
-        var collar = await ServiceHelpers.EnsureFoundAsync(collarRepository.GetByIdAsync(dto.CollarId, cancellationToken), dto.CollarId, "Collar");
-
-        var recordedAt = ServiceHelpers.AsUtc(dto.RecordedAt);
-        var collarWasAssignedToAnimal = await collarAssignmentRepository.Query()
-            .AnyAsync(x =>
-                x.AnimalId == dto.AnimalId &&
-                x.CollarId == dto.CollarId &&
-                x.AssignedAt <= recordedAt &&
-                (x.UnassignedAt == null || x.UnassignedAt >= recordedAt),
-                cancellationToken);
-
-        if (!collarWasAssignedToAnimal)
-        {
-            throw new ServiceException(
-                (int)HttpStatusCode.BadRequest,
-                "Location points can only be recorded from a collar assigned to the animal at the recorded time.");
-        }
+        var (animal, collar) = await validationService.ValidateCreateAsync(dto, cancellationToken);
 
         var locationPoint = mapper.Map<LocationPoint>(dto);
 
@@ -54,7 +35,7 @@ public class LocationPointService(
 
     public async Task<PagedResult<LocationPoint>> GetByAnimalAsync(int animalId, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(animalId, cancellationToken), animalId, "Animal");
+        await validationService.ValidateAnimalAsync(animalId, cancellationToken);
 
         return await locationPointRepository.Query()
             .Where(x => x.AnimalId == animalId)

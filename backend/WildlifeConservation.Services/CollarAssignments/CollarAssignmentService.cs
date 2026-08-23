@@ -2,17 +2,14 @@ namespace WildlifeConservation.Services.CollarAssignments;
 
 public class CollarAssignmentService(
     ICollarAssignmentRepository collarAssignmentRepository,
-    IAnimalRepository animalRepository,
     ICollarRepository collarRepository,
+    ICollarAssignmentValidationService validationService,
     ITransactionService transactionService,
     IMapper mapper) : ICollarAssignmentService
 {
     public async Task<PagedResult<CollarAssignment>> GetAllAsync(CollarAssignmentQuery query, CancellationToken cancellationToken = default)
     {
-        if (query.AssignedFrom.HasValue && query.AssignedTo.HasValue && query.AssignedFrom > query.AssignedTo)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "AssignedFrom cannot be later than AssignedTo.");
-        }
+        validationService.ValidateQuery(query);
 
         var assignments = collarAssignmentRepository.Query();
         if (query.AnimalId.HasValue)
@@ -50,31 +47,7 @@ public class CollarAssignmentService(
 
     public async Task<CollarAssignment> CreateAsync(CreateCollarAssignmentDto dto, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
-
-        var collar = await collarRepository.GetByIdAsync(dto.CollarId, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Collar with id {dto.CollarId} was not found.");
-
-        if (collar.Status is CollarStatus.Inactive or CollarStatus.Lost or CollarStatus.Damaged)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "Only available or assignable collars can be assigned.");
-        }
-
-        var animalHasActiveAssignment = await collarAssignmentRepository.Query()
-            .AnyAsync(x => x.AnimalId == dto.AnimalId && x.UnassignedAt == null, cancellationToken);
-
-        if (animalHasActiveAssignment)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "Animal already has an active collar assignment.");
-        }
-
-        var collarHasActiveAssignment = await collarAssignmentRepository.Query()
-            .AnyAsync(x => x.CollarId == dto.CollarId && x.UnassignedAt == null, cancellationToken);
-
-        if (collarHasActiveAssignment)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "Collar already has an active assignment.");
-        }
+        var collar = await validationService.ValidateCreateAsync(dto, cancellationToken);
 
         var assignment = mapper.Map<CollarAssignment>(dto);
         collar.Status = CollarStatus.Assigned;
@@ -88,19 +61,7 @@ public class CollarAssignmentService(
 
     public async Task<CollarAssignment> UnassignAsync(int id, UnassignCollarDto dto, CancellationToken cancellationToken = default)
     {
-        var assignment = await collarAssignmentRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Collar assignment with id {id} was not found.");
-
-        if (assignment.UnassignedAt.HasValue)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "Collar assignment is already unassigned.");
-        }
-
-        var unassignedAt = ServiceHelpers.AsUtc(dto.UnassignedAt ?? DateTime.UtcNow);
-        if (unassignedAt < assignment.AssignedAt)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "UnassignedAt cannot be earlier than AssignedAt.");
-        }
+        var (assignment, unassignedAt) = await validationService.ValidateUnassignAsync(id, dto, cancellationToken);
 
         assignment.UnassignedAt = unassignedAt;
         assignment.Reason = dto.Reason?.Trim() ?? assignment.Reason;

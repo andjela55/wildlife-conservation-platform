@@ -1,6 +1,6 @@
 namespace WildlifeConservation.Services.Species;
 
-public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper) : ISpeciesService
+public class SpeciesService(ISpeciesRepository speciesRepository, ISpeciesValidationService validationService, IMapper mapper) : ISpeciesService
 {
     public async Task<PagedResult<Models.Species.Species>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
@@ -11,26 +11,12 @@ public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper
 
     public async Task<Models.Species.Species> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var species = await speciesRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return species is null
-            ? throw new ServiceException((int)HttpStatusCode.NotFound, $"Species with id {id} was not found.")
-            : species;
+        return await validationService.GetRequiredAsync(id, cancellationToken);
     }
 
     public async Task<Models.Species.Species> CreateAsync(UpsertSpeciesDto dto, CancellationToken cancellationToken = default)
     {
-        var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
-
-        var duplicate = await speciesRepository.Query()
-            .AnyAsync(x => x.Name.ToLower() == name.ToLower(), cancellationToken);
-
-        if (duplicate)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, $"Species '{name}' already exists.");
-        }
+        await validationService.ValidateUpsertAsync(dto, existingId: null, cancellationToken);
 
         var species = mapper.Map<Models.Species.Species>(dto);
 
@@ -41,17 +27,8 @@ public class SpeciesService(ISpeciesRepository speciesRepository, IMapper mapper
 
     public async Task<Models.Species.Species> UpdateAsync(int id, UpsertSpeciesDto dto, CancellationToken cancellationToken = default)
     {
-        var species = await speciesRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Species with id {id} was not found.");
-        var name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
-
-        var duplicate = await speciesRepository.Query()
-            .AnyAsync(x => x.Id != id && x.Name.ToLower() == name.ToLower(), cancellationToken);
-        if (duplicate)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, $"Species '{name}' already exists.");
-        }
+        var species = await validationService.GetRequiredAsync(id, cancellationToken);
+        await validationService.ValidateUpsertAsync(dto, id, cancellationToken);
 
         mapper.Map(dto, species);
         return await speciesRepository.UpdateAsync(species, cancellationToken);

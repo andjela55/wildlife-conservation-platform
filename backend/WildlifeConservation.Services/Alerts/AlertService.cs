@@ -2,9 +2,7 @@ namespace WildlifeConservation.Services.Alerts;
 
 public class AlertService(
     IAlertRepository alertRepository,
-    IAnimalRepository animalRepository,
-    ICollarAssignmentRepository collarAssignmentRepository,
-    IUserRepository userRepository,
+    IAlertValidationService validationService,
     IMapper mapper) : IAlertService
 {
     public async Task<PagedResult<Alert>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
@@ -16,32 +14,17 @@ public class AlertService(
 
     public async Task<Alert> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return alert is null
-            ? throw new ServiceException((int)HttpStatusCode.NotFound, $"Alert with id {id} was not found.")
-            : alert;
+        return await validationService.GetRequiredAsync(id, cancellationToken);
     }
 
     public async Task<Alert> CreateAsync(CreateAlertDto dto, int createdByUserId, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(dto.AnimalId, cancellationToken), dto.AnimalId, "Animal");
-        await ServiceHelpers.EnsureFoundAsync(userRepository.GetByIdAsync(createdByUserId, cancellationToken), createdByUserId, "User");
-
         var createdAt = DateTime.UtcNow;
-        var activeAssignment = await collarAssignmentRepository.Query()
-            .Where(x =>
-                x.AnimalId == dto.AnimalId &&
-                x.AssignedAt <= createdAt &&
-                (x.UnassignedAt == null || x.UnassignedAt >= createdAt))
-            .OrderByDescending(x => x.AssignedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+        var collarId = await validationService.ValidateCreateAsync(dto, createdByUserId, createdAt, cancellationToken);
 
         var alert = mapper.Map<Alert>(dto);
-        alert.CollarId = activeAssignment?.CollarId;
+        alert.CollarId = collarId;
         alert.CreatedByUserId = createdByUserId;
-        ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
         alert.IsResolved = false;
         alert.CreatedAt = createdAt;
 
@@ -52,19 +35,7 @@ public class AlertService(
 
     public async Task<Alert> ResolveAsync(int id, ResolveAlertDto dto, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Alert with id {id} was not found.");
-
-        if (alert.IsResolved)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "Alert is already resolved.");
-        }
-
-        var resolvedAt = ServiceHelpers.AsUtc(dto.ResolvedAt ?? DateTime.UtcNow);
-        if (resolvedAt < alert.CreatedAt)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "ResolvedAt cannot be earlier than CreatedAt.");
-        }
+        var (alert, resolvedAt) = await validationService.ValidateResolveAsync(id, dto, cancellationToken);
 
         alert.IsResolved = true;
         alert.ResolvedAt = resolvedAt;
@@ -76,7 +47,7 @@ public class AlertService(
 
     public async Task<PagedResult<Alert>> GetByAnimalAsync(int animalId, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(animalId, cancellationToken), animalId, "Animal");
+        await validationService.ValidateAnimalAsync(animalId, cancellationToken);
 
         return await alertRepository.Query()
             .Where(x => x.AnimalId == animalId)

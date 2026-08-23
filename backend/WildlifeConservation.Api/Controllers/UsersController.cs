@@ -18,20 +18,20 @@ public class UsersController(IUserService userService, IMapper mapper) : Control
     [HttpPost]
     public async Task<ActionResult<UserResponseDto>> Create(CreateUserDto dto, CancellationToken cancellationToken)
     {
-        var created = mapper.Map<UserResponseDto>(await userService.CreateAsync(dto, cancellationToken));
+        var created = mapper.Map<UserResponseDto>(await userService.CreateAsync(dto, User.GetCurrentUserId(), cancellationToken));
         return CreatedAtAction(nameof(GetAll), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<UserResponseDto>> Update(int id, UpdateUserDto dto, CancellationToken cancellationToken)
     {
-        return Ok(mapper.Map<UserResponseDto>(await userService.UpdateAsync(id, dto, cancellationToken)));
+        return Ok(mapper.Map<UserResponseDto>(await userService.UpdateAsync(id, dto, User.GetCurrentUserId(), cancellationToken)));
     }
 
     [HttpPut("{id:int}/assigned-area")]
     public async Task<ActionResult<UserResponseDto>> UpdateAssignedArea(int id, UpdateUserAssignedAreaDto dto, CancellationToken cancellationToken)
     {
-        var user = await userService.UpdateAssignedAreaAsync(id, dto, cancellationToken);
+        var user = await userService.UpdateAssignedAreaAsync(id, dto, User.GetCurrentUserId(), cancellationToken);
         return Ok(mapper.Map<UserResponseDto>(user));
     }
 }
