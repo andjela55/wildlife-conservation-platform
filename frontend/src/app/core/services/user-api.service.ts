@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CreateUserRequest, UpdateUserAssignedAreaRequest, User } from '../models';
+import { CreateUserRequest, UpdateUserAssignedAreaRequest, UpdateUserRequest, User } from '../models';
 import { BaseApiService } from './base-api.service';
 
 @Injectable({ providedIn: 'root' })
-export class UserApiService extends BaseApiService<User, CreateUserRequest> {
+export class UserApiService extends BaseApiService<User, CreateUserRequest, UpdateUserRequest> {
   protected readonly resourcePath = 'users';
 
   constructor(http: HttpClient) {

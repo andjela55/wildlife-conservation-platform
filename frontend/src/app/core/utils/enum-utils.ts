@@ -4,8 +4,7 @@ export type EnumName =
   | 'SignalType'
   | 'ReportType'
   | 'Severity'
-  | 'AlertType'
-  | 'UserRole';
+  | 'AlertType';
 
 const enumValues: Record<EnumName, Array<string>> = {
   AnimalSex: ['Unknown', 'Male', 'Female'],
@@ -13,8 +12,7 @@ const enumValues: Record<EnumName, Array<string>> = {
   SignalType: ['Cellular', 'Satellite', 'LoRaWAN', 'Manual', 'Simulator'],
   ReportType: ['Sighting', 'Injury', 'CollarIssue', 'PoachingSigns', 'HabitatIssue', 'Emergency', 'Other'],
   Severity: ['Low', 'Medium', 'High', 'Critical'],
-  AlertType: ['NoMovement', 'LeftSafeZone', 'CollarBatteryLow', 'CollarSignalLost', 'Manual', 'Other'],
-  UserRole: ['Ranger', 'Researcher', 'Admin', 'Master']
+  AlertType: ['NoMovement', 'LeftSafeZone', 'CollarBatteryLow', 'CollarSignalLost', 'Manual', 'Other']
 };
 
 const enumLabels: Record<string, string> = {
@@ -45,11 +43,7 @@ const enumLabels: Record<string, string> = {
   NoMovement: 'No movement',
   LeftSafeZone: 'Left safe zone',
   CollarBatteryLow: 'Collar battery low',
-  CollarSignalLost: 'Collar signal lost',
-  Ranger: 'Ranger',
-  Researcher: 'Researcher',
-  Admin: 'Admin',
-  Master: 'Master'
+  CollarSignalLost: 'Collar signal lost'
 };
 
 export function enumKey(value: unknown, enumName?: EnumName): string {

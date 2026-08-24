@@ -2,8 +2,11 @@ namespace WildlifeConservation.Services.Collars;
 
 public class CollarService(
     ICollarRepository collarRepository,
-    ICollarAssignmentRepository collarAssignmentRepository,
-    IMapper mapper) : ICollarService
+    ICollarValidationService validationService,
+    IMapper mapper,
+    IAlertRepository alertRepository,
+    ILocationPointRepository locationPointRepository,
+    ICollarAssignmentRepository collarAssignmentRepository) : ICollarService
 {
     public async Task<PagedResult<Collar>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
@@ -14,65 +17,50 @@ public class CollarService(
 
     public async Task<Collar> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var collar = await collarRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return collar is null
-            ? throw new ServiceException((int)HttpStatusCode.NotFound, $"Collar with id {id} was not found.")
-            : collar;
+        return await validationService.GetRequiredAsync(id, cancellationToken);
     }
 
-    public async Task<Collar> CreateAsync(CreateCollarDto dto, CancellationToken cancellationToken = default)
+    public async Task<Collar> CreateAsync(UpsertCollarDto dto, CancellationToken cancellationToken = default)
     {
-        var serialNumber = ServiceHelpers.RequiredText(dto.SerialNumber, nameof(dto.SerialNumber));
-        await EnsureSerialNumberIsUniqueAsync(serialNumber, null, cancellationToken);
+        await validationService.ValidateCreateAsync(dto, cancellationToken);
 
         var collar = mapper.Map<Collar>(dto);
-        collar.SerialNumber = serialNumber;
-        collar.Model = dto.Model?.Trim();
-        collar.Manufacturer = dto.Manufacturer?.Trim();
-        collar.Notes = dto.Notes?.Trim();
 
         collar = await collarRepository.InsertAsync(collar, cancellationToken);
 
         return collar;
     }
 
-    public async Task<Collar> UpdateAsync(int id, UpdateCollarDto dto, CancellationToken cancellationToken = default)
+    public async Task<Collar> UpdateAsync(int id, UpsertCollarDto dto, CancellationToken cancellationToken = default)
     {
-        var collar = await collarRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Collar with id {id} was not found.");
-
-        var serialNumber = ServiceHelpers.RequiredText(dto.SerialNumber, nameof(dto.SerialNumber));
-        await EnsureSerialNumberIsUniqueAsync(serialNumber, id, cancellationToken);
-
-        var hasActiveAssignment = await collarAssignmentRepository.Query()
-            .AnyAsync(x => x.CollarId == id && x.UnassignedAt == null, cancellationToken);
-
-        if (hasActiveAssignment && dto.Status != collar.Status && dto.Status != CollarStatus.Assigned)
-        {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, "An actively assigned collar must keep the Assigned status until it is unassigned.");
-        }
+        var collar = await validationService.ValidateUpdateAsync(id, dto, cancellationToken);
 
         mapper.Map(dto, collar);
-        collar.SerialNumber = serialNumber;
-        collar.Model = dto.Model?.Trim();
-        collar.Manufacturer = dto.Manufacturer?.Trim();
-        collar.Notes = dto.Notes?.Trim();
 
         collar = await collarRepository.UpdateAsync(collar, cancellationToken);
 
         return collar;
     }
 
-    private async Task EnsureSerialNumberIsUniqueAsync(string serialNumber, int? existingId, CancellationToken cancellationToken)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var duplicate = await collarRepository.Query()
-            .AnyAsync(x => x.SerialNumber.ToLower() == serialNumber.ToLower() && (!existingId.HasValue || x.Id != existingId.Value), cancellationToken);
-
-        if (duplicate)
+        var collar = await validationService.GetRequiredAsync(id, cancellationToken);
+        await using var transaction = await collarRepository.StartTransactionAsync(cancellationToken);
+        try
         {
-            throw new ServiceException((int)HttpStatusCode.BadRequest, $"Collar serial number '{serialNumber}' already exists.");
+            var alerts = await alertRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            var locations = await locationPointRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            var assignments = await collarAssignmentRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            await alertRepository.DeleteRangeAsync(alerts, cancellationToken);
+            await locationPointRepository.DeleteRangeAsync(locations, cancellationToken);
+            await collarAssignmentRepository.DeleteRangeAsync(assignments, cancellationToken);
+            await collarRepository.DeleteAsync(collar, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
     }
 }

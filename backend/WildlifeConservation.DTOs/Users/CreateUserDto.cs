@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using WildlifeConservation.Shared.Enums;
 
 namespace WildlifeConservation.DTOs;
 
@@ -18,7 +17,8 @@ public record CreateUserDto
     [StringLength(100, MinimumLength = 8)]
     public string Password { get; init; } = string.Empty;
 
-    public UserRole Role { get; init; } = UserRole.Ranger;
+    [MinLength(1)]
+    public IReadOnlyCollection<int> RoleIds { get; init; } = Array.Empty<int>();
 
     public bool IsActive { get; init; } = true;
 

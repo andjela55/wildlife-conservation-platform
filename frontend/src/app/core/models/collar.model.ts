@@ -9,12 +9,10 @@ export interface Collar {
   notes: string | null;
 }
 
-export interface CreateCollarRequest {
+export interface UpsertCollarRequest {
   serialNumber: string;
   model: string | null;
   manufacturer: string | null;
   status: CollarStatus;
   notes: string | null;
 }
-
-export type UpdateCollarRequest = CreateCollarRequest;

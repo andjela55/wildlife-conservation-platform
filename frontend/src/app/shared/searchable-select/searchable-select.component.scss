@@ -1,0 +1,41 @@
+:host,
+mat-form-field {
+  display: block;
+  width: 100%;
+}
+
+.searchable-select {
+  position: relative;
+}
+
+.searchable-options {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% - 20px);
+  right: 0;
+  left: 0;
+  overflow-y: auto;
+  max-height: 240px;
+  border: 1px solid rgba(45, 74, 64, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(31, 52, 43, 0.16);
+}
+
+.searchable-option,
+.searchable-empty {
+  padding: 10px 12px;
+}
+
+.searchable-option {
+  cursor: pointer;
+}
+
+.searchable-option:hover,
+.searchable-option.selected {
+  background: #f1f5f2;
+}
+
+.searchable-empty {
+  color: #69756d;
+}

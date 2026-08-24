@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { AuthenticatedUser, LoginRequest, LoginResponse, UserRole } from '../models';
+import { AuthenticatedUser, LoginRequest, LoginResponse, PermissionCode, PermissionCodes } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -74,13 +74,11 @@ export class AuthService {
       );
   }
 
-  hasAnyRole(roles: Array<UserRole>): boolean {
-    if (!roles.length) {
-      return true;
-    }
-
-    const user = this.currentUser;
-    return !!user && (user.role === 'Master' || roles.includes(user.role));
+  hasPermission(permission: PermissionCode): boolean {
+    return !!this.currentUser && (
+      this.currentUser.permissions.includes(PermissionCodes.Master) ||
+      this.currentUser.permissions.includes(permission)
+    );
   }
 
   private setToken(token: string): void {

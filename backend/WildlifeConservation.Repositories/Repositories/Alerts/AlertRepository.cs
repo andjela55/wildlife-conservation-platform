@@ -8,6 +8,8 @@ public interface IAlertRepository
     Task<Alert?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Alert> InsertAsync(Alert entity, CancellationToken cancellationToken = default);
     Task<Alert> UpdateAsync(Alert entity, CancellationToken cancellationToken = default);
+    Task DeleteRangeAsync(List<Alert> entities, CancellationToken cancellationToken = default);
+    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> StartTransactionAsync(CancellationToken cancellationToken = default);
 }
 
 public class AlertRepository(WildlifeDbContext dbContext)

@@ -88,6 +88,7 @@ app.UseMiddleware<ServiceExceptionMiddleware>();
 
 app.MapControllers();
 app.MapHub<AnimalTrackingHub>("/animal-tracking-hub").RequireAuthorization();
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 if (app.Environment.IsDevelopment())
 {

@@ -3,7 +3,7 @@ using WildlifeConservation.Shared.Enums;
 
 namespace WildlifeConservation.DTOs;
 
-public record CreateAnimalDto
+public record UpsertAnimalDto
 {
     [Required]
     [StringLength(120)]
@@ -19,8 +19,4 @@ public record CreateAnimalDto
     public string? Notes { get; init; }
 
     public bool IsActive { get; init; } = true;
-}
-
-public record UpdateAnimalDto : CreateAnimalDto
-{
 }

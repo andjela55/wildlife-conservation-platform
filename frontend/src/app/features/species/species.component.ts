@@ -2,9 +2,14 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
-import { CreateSpeciesRequest, CreateSubspeciesRequest, PagedResult, Species, Subspecies } from '../../core/models';
+import { PagedResult, PermissionCodes, Species, Subspecies, UpsertSpeciesRequest, UpsertSubspeciesRequest } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
 import { SpeciesApiService } from '../../core/services/species-api.service';
 import { SubspeciesApiService } from '../../core/services/subspecies-api.service';
+import { SearchableSelectOption } from '../../shared/searchable-select/searchable-select.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-species',
@@ -15,8 +20,10 @@ export class SpeciesComponent implements OnInit, OnDestroy {
   species: Array<Species> = [];
   speciesOptions: Array<Species> = [];
   subspecies: Array<Subspecies> = [];
-  speciesColumns: Array<string> = ['name', 'description'];
-  subspeciesColumns: Array<string> = ['species', 'name'];
+  searchableSpeciesOptions: Array<SearchableSelectOption> = [];
+  speciesNames: Record<number, string> = {};
+  speciesColumns: Array<string> = ['name', 'description', 'actions'];
+  subspeciesColumns: Array<string> = ['species', 'name', 'actions'];
   pageSizeOptions: Array<number> = [5, 10, 20];
   speciesPageIndex = 0;
   speciesPageSize = 10;
@@ -29,6 +36,8 @@ export class SpeciesComponent implements OnInit, OnDestroy {
   speciesFormErrorMessage = '';
   subspeciesFormErrorMessage = '';
   successMessage = '';
+  editingSpeciesId: number | null = null;
+  editingSubspeciesId: number | null = null;
   private readonly destroy$ = new Subject<void>();
 
   speciesForm = this.fb.group({
@@ -45,20 +54,30 @@ export class SpeciesComponent implements OnInit, OnDestroy {
   constructor(
     private readonly speciesApi: SpeciesApiService,
     private readonly subspeciesApi: SubspeciesApiService,
+    private readonly authService: AuthService,
+    private readonly dialog: MatDialog,
     private readonly fb: UntypedFormBuilder
   ) {}
 
+  canManageSpecies = false;
+  canManageSubspecies = false;
+
   ngOnInit(): void {
+    this.canManageSpecies = this.authService.hasPermission(PermissionCodes.SpeciesWrite);
+    this.canManageSubspecies = this.authService.hasPermission(PermissionCodes.SubspeciesWrite);
+    if (!this.canManageSpecies) {
+      this.speciesColumns = ['name', 'description'];
+    }
+    if (!this.canManageSubspecies) {
+      this.subspeciesColumns = ['species', 'name'];
+    }
+
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  getSpeciesName(speciesId: number): string {
-    return this.speciesOptions.find((item) => item.id === speciesId)?.name ?? `Species #${speciesId}`;
   }
 
   refresh(): void {
@@ -112,15 +131,20 @@ export class SpeciesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.speciesApi.create(this.mapCreateSpeciesRequest()).pipe(takeUntil(this.destroy$)).subscribe({
+    const request = this.mapUpsertSpeciesRequest();
+    const operation = this.editingSpeciesId === null
+      ? this.speciesApi.create(request)
+      : this.speciesApi.update(this.editingSpeciesId, request);
+    operation.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.successMessage = 'Species created.';
+        this.successMessage = this.editingSpeciesId === null ? 'Species created.' : 'Species updated.';
         this.speciesFormErrorMessage = '';
         this.speciesForm.reset();
+        this.editingSpeciesId = null;
         this.refresh();
       },
       error: () => {
-        this.speciesFormErrorMessage = 'Unable to create species.';
+        this.speciesFormErrorMessage = 'Unable to save species.';
       }
     });
   }
@@ -135,17 +159,62 @@ export class SpeciesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.subspeciesApi.create(this.mapCreateSubspeciesRequest()).pipe(takeUntil(this.destroy$)).subscribe({
+    const request = this.mapUpsertSubspeciesRequest();
+    const operation = this.editingSubspeciesId === null
+      ? this.subspeciesApi.create(request)
+      : this.subspeciesApi.update(this.editingSubspeciesId, request);
+    operation.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.successMessage = 'Subspecies created.';
+        this.successMessage = this.editingSubspeciesId === null ? 'Subspecies created.' : 'Subspecies updated.';
         this.subspeciesFormErrorMessage = '';
         this.subspeciesForm.reset();
+        this.editingSubspeciesId = null;
         this.refresh();
       },
       error: () => {
-        this.subspeciesFormErrorMessage = 'Unable to create subspecies.';
+        this.subspeciesFormErrorMessage = 'Unable to save subspecies.';
       }
     });
+  }
+
+  editSpecies(item: Species): void {
+    this.editingSpeciesId = item.id;
+    this.speciesForm.reset({ name: item.name, description: item.description });
+  }
+
+  deleteSpecies(item: Species): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: {
+      title: 'Delete species', message: `Delete species "${item.name}"?`
+    }, panelClass: 'confirm-dialog-panel' });
+    dialogRef.componentInstance.getConfirm().pipe(take(1), takeUntil(this.destroy$)).subscribe(() => this.speciesApi.delete(item.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.successMessage = 'Species deleted.'; this.refresh(); },
+      error: () => this.errorMessage = 'Unable to delete species. It may still have subspecies.'
+    }));
+  }
+
+  cancelSpeciesEdit(): void {
+    this.editingSpeciesId = null;
+    this.speciesForm.reset();
+  }
+
+  editSubspecies(item: Subspecies): void {
+    this.editingSubspeciesId = item.id;
+    this.subspeciesForm.reset({ speciesId: item.speciesId, name: item.name, description: item.description });
+  }
+
+  deleteSubspecies(item: Subspecies): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: {
+      title: 'Delete subspecies', message: `Delete subspecies "${item.name}"?`
+    }, panelClass: 'confirm-dialog-panel' });
+    dialogRef.componentInstance.getConfirm().pipe(take(1), takeUntil(this.destroy$)).subscribe(() => this.subspeciesApi.delete(item.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.successMessage = 'Subspecies deleted.'; this.refresh(); },
+      error: () => this.errorMessage = 'Unable to delete subspecies. It may still have animals.'
+    }));
+  }
+
+  cancelSubspeciesEdit(): void {
+    this.editingSubspeciesId = null;
+    this.subspeciesForm.reset();
   }
 
   private mapLoadData(result: {
@@ -162,13 +231,15 @@ export class SpeciesComponent implements OnInit, OnDestroy {
     this.subspeciesTotalCount = result.subspecies.totalCount;
     this.subspeciesPageIndex = result.subspecies.pageNumber - 1;
     this.subspeciesPageSize = result.subspecies.pageSize;
+    this.searchableSpeciesOptions = this.speciesOptions.map((item) => ({ value: item.id, label: item.name }));
+    this.speciesNames = Object.fromEntries(this.speciesOptions.map((item) => [item.id, item.name]));
   }
 
-  private mapCreateSpeciesRequest(): CreateSpeciesRequest {
+  private mapUpsertSpeciesRequest(): UpsertSpeciesRequest {
     return this.speciesForm.getRawValue();
   }
 
-  private mapCreateSubspeciesRequest(): CreateSubspeciesRequest {
+  private mapUpsertSubspeciesRequest(): UpsertSubspeciesRequest {
     return this.subspeciesForm.getRawValue();
   }
 }

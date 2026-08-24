@@ -23,8 +23,8 @@ import {
   Collar,
   LocationPoint,
   LocationPointReceived,
+  PermissionCodes,
   RangerReport,
-  Severity,
 } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
@@ -48,6 +48,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   latestLocations: Array<LocationPoint> = [];
   reports: Array<RangerReport> = [];
   alerts: Array<Alert> = [];
+  activeAnimalsCount = 0;
+  assignedCollarsCount = 0;
+  unresolvedAlertsCount = 0;
+  recentAlerts: Array<Alert> = [];
+  recentReports: Array<RangerReport> = [];
+  topAnimals: Array<Animal> = [];
+  mapLocations: Array<LocationPoint> = [];
+  animalNames: Record<number, string> = {};
+  alertSeverityClasses: Record<number, string> = {};
+  alertSeverityIcons: Record<number, string> = {};
   isLoading = false;
   errorMessage = '';
   selectedLocation: LocationPoint | null = null;
@@ -69,7 +79,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private ngZone: NgZone,
   ) {}
 
+  canCreateReports = false;
+
   ngOnInit(): void {
+    this.canCreateReports = this.authService.hasPermission(PermissionCodes.RangerReportsWrite);
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
     this.animalTrackingSignalR.locationPointReceived$
       .pipe(takeUntil(this.destroy$))
@@ -101,55 +114,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get activeAnimalsCount(): number {
-    return this.animals.filter((animal) => animal.isActive).length;
-  }
-
-  get assignedCollarsCount(): number {
-    return this.collars.filter((collar) =>
-      enumEquals(collar.status, 'CollarStatus', 'Assigned'),
-    ).length;
-  }
-
-  get unresolvedAlertsCount(): number {
-    return this.alerts.filter((alert) => !alert.isResolved).length;
-  }
-
-  get criticalAlerts(): Array<Alert> {
-    return this.alerts
-      .filter(
-        (alert) =>
-          !alert.isResolved &&
-          enumEquals(alert.severity, 'Severity', 'Critical'),
-      )
-      .slice(0, 5);
-  }
-
-  get recentAlerts(): Array<Alert> {
-    return this.alerts.filter((alert) => !alert.isResolved).slice(0, 3);
-  }
-
-  get recentReports(): Array<RangerReport> {
-    return this.reports.slice(0, 3);
-  }
-
-  get topAnimals(): Array<Animal> {
-    return this.animals.filter((animal) => animal.isActive).slice(0, 4);
-  }
-
-  get mapLocations(): Array<LocationPoint> {
-    return this.latestLocations.slice(0, 6);
-  }
-
-  mapX(point: LocationPoint): number {
-    return Math.min(88, Math.max(8, ((point.longitude + 180) / 360) * 100));
-  }
-
-  mapY(point: LocationPoint): number {
-    return Math.min(84, Math.max(12, ((90 - point.latitude) / 180) * 100));
-  }
-
-  getAnimalName(animalId: number | null | undefined): string {
+  private getAnimalName(animalId: number | null | undefined): string {
     if (!animalId) {
       return 'Area report';
     }
@@ -160,16 +125,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
-  getLocationAnimalName(point: LocationPoint): string {
+  private getLocationAnimalName(point: LocationPoint): string {
     return point.animalName || this.getAnimalName(point.animalId);
-  }
-
-  getSeverityIcon(severity: Severity): string {
-    return `assets/icons/alerts/alarm_${enumKey(severity, 'Severity').toLowerCase()}.svg`;
-  }
-
-  getSeverityClass(severity: Severity): string {
-    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   loadData(): Observable<void> {
@@ -206,6 +163,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.latestLocations = result.latestLocations;
     this.reports = result.reports;
     this.alerts = result.alerts;
+    this.updateDashboardView();
 
     this.renderMarkers(this.mapLocations);
     this.applyInitialMapView();
@@ -220,6 +178,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else {
       this.latestLocations = [locationPoint, ...this.latestLocations];
     }
+    this.updateDashboardView();
 
     this.upsertMarker(locationPoint);
 
@@ -422,5 +381,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
       currentUser.assignedMapZoom ?? 11,
     );
     return true;
+  }
+
+  private updateDashboardView(): void {
+    this.activeAnimalsCount = this.animals.filter((animal) => animal.isActive).length;
+    this.assignedCollarsCount = this.collars.filter((collar) =>
+      enumEquals(collar.status, 'CollarStatus', 'Assigned')
+    ).length;
+    this.unresolvedAlertsCount = this.alerts.filter((alert) => !alert.isResolved).length;
+    this.recentAlerts = this.alerts.filter((alert) => !alert.isResolved).slice(0, 3);
+    this.recentReports = this.reports.slice(0, 3);
+    this.topAnimals = this.animals.filter((animal) => animal.isActive).slice(0, 4);
+    this.mapLocations = this.latestLocations.slice(0, 6);
+    this.animalNames = Object.fromEntries(this.animals.map((animal) => [animal.id, animal.name]));
+    this.alertSeverityClasses = Object.fromEntries(this.recentAlerts.map((alert) => [
+      alert.id,
+      enumKey(alert.severity, 'Severity').toLowerCase()
+    ]));
+    this.alertSeverityIcons = Object.fromEntries(this.recentAlerts.map((alert) => [
+      alert.id,
+      `assets/icons/alerts/alarm_${this.alertSeverityClasses[alert.id]}.svg`
+    ]));
   }
 }

@@ -10,18 +10,18 @@
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
   <div *ngIf="successMessage" class="message success">{{ successMessage }}</div>
 
-  <div class="grid two">
+  <div class="grid two" [class.single]="!canManageAlerts">
     <section class="table-panel">
       <h2>Alerts</h2>
       <div class="table-wrap" *ngIf="alerts.length; else noAlerts">
         <table mat-table [dataSource]="alerts">
           <ng-container matColumnDef="animal">
             <th mat-header-cell *matHeaderCellDef>Animal</th>
-            <td mat-cell *matCellDef="let alert">{{ getAnimalName(alert.animalId) }}</td>
+            <td mat-cell *matCellDef="let alert">{{ animalNames[alert.animalId] || 'Animal #' + alert.animalId }}</td>
           </ng-container>
           <ng-container matColumnDef="collar">
             <th mat-header-cell *matHeaderCellDef>Collar</th>
-            <td mat-cell *matCellDef="let alert">{{ getCollarSerial(alert.collarId) }}</td>
+            <td mat-cell *matCellDef="let alert">{{ alert.collarId ? (collarSerials[alert.collarId] || 'Collar #' + alert.collarId) : '-' }}</td>
           </ng-container>
           <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef>Type</th>
@@ -29,7 +29,7 @@
           </ng-container>
           <ng-container matColumnDef="severity">
             <th mat-header-cell *matHeaderCellDef>Severity</th>
-            <td mat-cell *matCellDef="let alert"><span class="pill" [ngClass]="getSeverityClass(alert.severity)">{{ alert.severity | enumLabel:'Severity' }}</span></td>
+            <td mat-cell *matCellDef="let alert"><span class="pill" [ngClass]="severityClasses[alert.id]">{{ alert.severity | enumLabel:'Severity' }}</span></td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -58,23 +58,18 @@
       </ng-template>
     </section>
 
-    <section class="panel">
+    <section class="panel" *ngIf="canManageAlerts">
       <h2>Create Alert</h2>
       <form class="form-grid" [formGroup]="alertForm" (ngSubmit)="createAlert()">
         <div *ngIf="alertFormErrorMessage" class="message error form-message">
           {{ alertFormErrorMessage }}
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Animal</mat-label>
-          <mat-select formControlName="animalId">
-            <mat-option [value]="null">Select animal</mat-option>
-            <mat-option *ngFor="let animal of animals" [value]="animal.id">{{ animal.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-searchable-select label="Animal" [options]="animalOptions" formControlName="animalId"></app-searchable-select>
         <mat-form-field appearance="outline">
           <mat-label>Assigned collar</mat-label>
-          <input matInput [value]="getSelectedAnimalCollarSerial()" readonly />
+          <input matInput [value]="selectedAnimalCollarSerial" readonly />
+          <mat-hint>Resolved automatically from the assignment at the alert time.</mat-hint>
         </mat-form-field>
         <div class="form-row">
           <mat-form-field appearance="outline">
@@ -82,18 +77,16 @@
             <mat-select formControlName="alertType">
               <mat-option *ngFor="let option of alertTypeOptions" [value]="option">{{ option | enumLabel:'AlertType' }}</mat-option>
             </mat-select>
+            <mat-hint>Select the event category.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Severity</mat-label>
             <mat-select formControlName="severity">
               <mat-option *ngFor="let option of severityOptions" [value]="option">{{ option | enumLabel:'Severity' }}</mat-option>
             </mat-select>
+            <mat-hint></mat-hint>
           </mat-form-field>
         </div>
-        <mat-form-field appearance="outline">
-          <mat-label>Created at</mat-label>
-          <input matInput type="datetime-local" formControlName="createdAt" />
-        </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Description</mat-label>
           <textarea matInput formControlName="description" maxlength="2000"></textarea>

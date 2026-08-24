@@ -10,7 +10,7 @@
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
   <div *ngIf="successMessage" class="message success">{{ successMessage }}</div>
 
-  <div class="grid two">
+  <div class="grid two" [class.single]="!canManageAnimals">
     <section class="table-panel">
       <h2>Animal Registry</h2>
       <div class="table-wrap" *ngIf="animals.length; else noAnimals">
@@ -21,7 +21,7 @@
           </ng-container>
           <ng-container matColumnDef="subspecies">
             <th mat-header-cell *matHeaderCellDef>Subspecies</th>
-            <td mat-cell *matCellDef="let animal">{{ getSubspeciesName(animal.subspeciesId) }}</td>
+            <td mat-cell *matCellDef="let animal">{{ subspeciesNames[animal.subspeciesId] || 'Subspecies #' + animal.subspeciesId }}</td>
           </ng-container>
           <ng-container matColumnDef="sex">
             <th mat-header-cell *matHeaderCellDef>Sex</th>
@@ -30,6 +30,15 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let animal"><span class="pill">{{ animal.isActive ? 'Active' : 'Inactive' }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let animal">
+              <div class="table-actions">
+                <button mat-stroked-button type="button" (click)="$event.stopPropagation(); editAnimal(animal)">Edit</button>
+                <button mat-stroked-button color="warn" type="button" (click)="$event.stopPropagation(); deleteAnimal(animal)">Delete</button>
+              </div>
+            </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="animalColumns"></tr>
           <tr
@@ -57,6 +66,10 @@
         <h2>{{ selectedAnimal.name }}</h2>
         <div class="detail-grid">
           <div>
+            <span class="muted">Current collar</span>
+            <strong>{{ currentAssignment ? (collarLabels[currentAssignment.collarId] || 'Collar #' + currentAssignment.collarId) : 'None' }}</strong>
+          </div>
+          <div>
             <span class="muted">Locations</span>
             <strong>{{ locationsTotalCount }}</strong>
           </div>
@@ -70,37 +83,64 @@
           </div>
         </div>
 
-        <div class="table-wrap">
-          <table mat-table [dataSource]="selectedLocations">
-            <ng-container matColumnDef="coordinates">
-              <th mat-header-cell *matHeaderCellDef>Latest coordinates</th>
-              <td mat-cell *matCellDef="let point">{{ point.latitude }}, {{ point.longitude }}</td>
-            </ng-container>
-            <ng-container matColumnDef="recordedAt">
-              <th mat-header-cell *matHeaderCellDef>Recorded</th>
-              <td mat-cell *matCellDef="let point">{{ point.recordedAt | date:'short' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="signalType">
-              <th mat-header-cell *matHeaderCellDef>Signal</th>
-              <td mat-cell *matCellDef="let point">{{ point.signalType | enumLabel:'SignalType' }}</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="locationColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: locationColumns"></tr>
-          </table>
-        </div>
-        <mat-paginator
-          *ngIf="locationsTotalCount"
-          [length]="locationsTotalCount"
-          [pageIndex]="locationPageIndex"
-          [pageSize]="locationPageSize"
-          [pageSizeOptions]="pageSizeOptions"
-          (page)="onLocationPageChanged($event)"
-        ></mat-paginator>
+        <section class="detail-table-section">
+          <h3>Collar assignment history</h3>
+          <div class="table-wrap" *ngIf="selectedAssignments.length; else noAssignments">
+            <table mat-table [dataSource]="selectedAssignments">
+              <ng-container matColumnDef="collar">
+                <th mat-header-cell *matHeaderCellDef>Collar</th>
+                <td mat-cell *matCellDef="let assignment">{{ collarLabels[assignment.collarId] || 'Collar #' + assignment.collarId }}</td>
+              </ng-container>
+              <ng-container matColumnDef="assignedAt">
+                <th mat-header-cell *matHeaderCellDef>Assigned</th>
+                <td mat-cell *matCellDef="let assignment">{{ assignment.assignedAt | belgradeDate }}</td>
+              </ng-container>
+              <ng-container matColumnDef="unassignedAt">
+                <th mat-header-cell *matHeaderCellDef>Unassigned</th>
+                <td mat-cell *matCellDef="let assignment">{{ assignment.unassignedAt ? (assignment.unassignedAt | belgradeDate) : 'Current' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="assignmentColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: assignmentColumns"></tr>
+            </table>
+          </div>
+          <ng-template #noAssignments><div class="empty compact">No collar assignments for this animal.</div></ng-template>
+        </section>
+
+        <section class="detail-table-section">
+          <h3>Location history</h3>
+          <div class="table-wrap" *ngIf="selectedLocations.length; else noLocations">
+            <table mat-table [dataSource]="selectedLocations">
+              <ng-container matColumnDef="coordinates">
+                <th mat-header-cell *matHeaderCellDef>Coordinates</th>
+                <td mat-cell *matCellDef="let point">{{ point.latitude }}, {{ point.longitude }}</td>
+              </ng-container>
+              <ng-container matColumnDef="recordedAt">
+                <th mat-header-cell *matHeaderCellDef>Recorded</th>
+                <td mat-cell *matCellDef="let point">{{ point.recordedAt | belgradeDate }}</td>
+              </ng-container>
+              <ng-container matColumnDef="signalType">
+                <th mat-header-cell *matHeaderCellDef>Signal</th>
+                <td mat-cell *matCellDef="let point">{{ point.signalType | enumLabel:'SignalType' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="locationColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: locationColumns"></tr>
+            </table>
+          </div>
+          <ng-template #noLocations><div class="empty compact">No location points for this animal.</div></ng-template>
+          <mat-paginator
+            *ngIf="locationsTotalCount"
+            [length]="locationsTotalCount"
+            [pageIndex]="locationPageIndex"
+            [pageSize]="locationPageSize"
+            [pageSizeOptions]="pageSizeOptions"
+            (page)="onLocationPageChanged($event)"
+          ></mat-paginator>
+        </section>
       </section>
     </section>
 
-    <section class="panel">
-      <h2>Create Animal</h2>
+    <section class="panel" *ngIf="canManageAnimals">
+      <h2>{{ editingAnimalId === null ? 'Create Animal' : 'Edit Animal' }}</h2>
       <form class="form-grid" [formGroup]="animalForm" (ngSubmit)="createAnimal()">
         <div *ngIf="animalFormErrorMessage" class="message error form-message">
           {{ animalFormErrorMessage }}
@@ -110,13 +150,7 @@
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" maxlength="120" />
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Subspecies</mat-label>
-          <mat-select formControlName="subspeciesId">
-            <mat-option [value]="null">Select subspecies</mat-option>
-            <mat-option *ngFor="let item of subspecies" [value]="item.id">{{ item.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-searchable-select label="Subspecies" [options]="subspeciesOptions" formControlName="subspeciesId"></app-searchable-select>
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Sex</mat-label>
@@ -126,7 +160,9 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Date of birth</mat-label>
-            <input matInput type="date" formControlName="dateOfBirth" />
+            <input matInput formControlName="dateOfBirth" [matDatepicker]="dateOfBirthPicker" />
+            <mat-datepicker-toggle matSuffix [for]="dateOfBirthPicker"></mat-datepicker-toggle>
+            <mat-datepicker #dateOfBirthPicker></mat-datepicker>
           </mat-form-field>
         </div>
         <mat-form-field appearance="outline">
@@ -134,7 +170,10 @@
           <textarea matInput formControlName="notes" maxlength="1000"></textarea>
         </mat-form-field>
         <mat-checkbox formControlName="isActive">Active</mat-checkbox>
-        <button mat-raised-button color="primary" type="submit">Create animal</button>
+        <div class="form-row">
+          <button mat-raised-button color="primary" type="submit">{{ editingAnimalId === null ? 'Create animal' : 'Save changes' }}</button>
+          <button *ngIf="editingAnimalId !== null" mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+        </div>
       </form>
 
       <div class="message success section-spacer">

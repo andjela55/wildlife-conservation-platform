@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WildlifeConservation.DTOs;
 
-public record CreateSubspeciesDto
+public record UpsertSubspeciesDto
 {
     [Range(1, int.MaxValue)]
     public int SpeciesId { get; init; }

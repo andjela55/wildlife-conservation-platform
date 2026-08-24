@@ -2,9 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, map, Observable, of, Subject, takeUntil } from 'rxjs';
-import { CreateUserRequest, PagedResult, UpdateUserAssignedAreaRequest, User, userRoleOptions } from '../core/models';
+import { CreateUserRequest, PagedResult, PermissionCodes, Role, UpdateUserAssignedAreaRequest, UpdateUserRequest, User } from '../core/models';
 import { AuthService } from '../core/services/auth.service';
+import { RoleApiService } from '../core/services/role-api.service';
 import { UserApiService } from '../core/services/user-api.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-users',
@@ -15,7 +19,14 @@ export class UsersComponent implements OnInit, OnDestroy {
   users: Array<User> = [];
   selectedUser: User | null = null;
   userColumns: Array<string> = ['fullName', 'email', 'role', 'assignedArea', 'status', 'actions'];
-  userRoleOptions = userRoleOptions;
+  canManageUsers = false;
+  canManageAllUsers = false;
+  roleOptions: ReadonlyArray<Role> = [];
+  createRoleOptions: ReadonlyArray<Role> = [];
+  editRoleOptions: ReadonlyArray<Role> = [];
+  roleLabels: Record<number, string> = {};
+  assignedAreaLabels: Record<number, string> = {};
+  editableUsers: Record<number, boolean> = {};
   pageSizeOptions: Array<number> = [5, 10, 20];
   pageIndex = 0;
   pageSize = 10;
@@ -31,7 +42,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     fullName: ['', [Validators.required, Validators.maxLength(160)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
-    role: ['Ranger', Validators.required],
+    roleIds: [[], Validators.required],
     isActive: [true],
     assignedLocationName: [''],
     assignedLatitude: [null, [Validators.min(-90), Validators.max(90)]],
@@ -46,13 +57,40 @@ export class UsersComponent implements OnInit, OnDestroy {
     assignedMapZoom: [11, [Validators.min(1), Validators.max(18)]]
   });
 
+  editUserForm = this.fb.group({
+    fullName: ['', [Validators.required, Validators.maxLength(160)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
+    password: ['', [Validators.minLength(8), Validators.maxLength(100)]],
+    roleIds: [[], Validators.required],
+    isActive: [true],
+    assignedLocationName: [''],
+    assignedLatitude: [null, [Validators.min(-90), Validators.max(90)]],
+    assignedLongitude: [null, [Validators.min(-180), Validators.max(180)]],
+    assignedMapZoom: [11, [Validators.min(1), Validators.max(18)]]
+  });
+
   constructor(
     private readonly userApi: UserApiService,
+    private readonly roleApi: RoleApiService,
     private readonly authService: AuthService,
+    private readonly dialog: MatDialog,
     private readonly fb: UntypedFormBuilder
   ) {}
 
   ngOnInit(): void {
+    this.canManageUsers = this.authService.hasPermission(PermissionCodes.UsersWrite);
+    this.canManageAllUsers = !!this.authService.currentUser?.permissions.includes(PermissionCodes.Master);
+    if (!this.canManageUsers) {
+      this.userColumns = ['fullName', 'email', 'role', 'assignedArea', 'status'];
+    }
+
+    this.roleApi.getAll().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (roles) => {
+        this.roleOptions = roles;
+        this.updateRoleOptions();
+      },
+      error: () => this.errorMessage = 'Unable to load roles.'
+    });
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
@@ -107,7 +145,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             fullName: '',
             email: '',
             password: '',
-            role: 'Ranger',
+            roleIds: [],
             isActive: true,
             assignedLocationName: '',
             assignedLatitude: null,
@@ -123,14 +161,75 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   selectUser(user: User): void {
+    if (!this.editableUsers[user.id]) {
+      return;
+    }
+
     this.selectedUser = user;
+    this.updateRoleOptions();
     this.workflowTabIndex = 1;
+    this.editUserForm.reset({
+      fullName: user.fullName, email: user.email, password: '', roleIds: user.roles.map((role) => role.id), isActive: user.isActive,
+      assignedLocationName: user.assignedLocationName ?? '', assignedLatitude: user.assignedLatitude,
+      assignedLongitude: user.assignedLongitude, assignedMapZoom: user.assignedMapZoom ?? 11
+    });
+  }
+
+  selectUserArea(user: User): void {
+    if (!this.editableUsers[user.id]) {
+      return;
+    }
+
+    this.selectedUser = user;
+    this.workflowTabIndex = 2;
     this.assignedAreaForm.reset({
       assignedLocationName: user.assignedLocationName ?? '',
       assignedLatitude: user.assignedLatitude,
       assignedLongitude: user.assignedLongitude,
       assignedMapZoom: user.assignedMapZoom ?? 11
     });
+  }
+
+  deleteUser(user: User): void {
+    if (!this.editableUsers[user.id]) return;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: {
+      title: 'Delete user', message: `Delete user "${user.fullName}"?`
+    }, panelClass: 'confirm-dialog-panel' });
+    dialogRef.componentInstance.getConfirm().pipe(take(1), takeUntil(this.destroy$)).subscribe(() => this.userApi.delete(user.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.successMessage = 'User deleted.'; if (this.selectedUser?.id === user.id) this.cancelUserEdit(); this.refresh(); },
+      error: () => this.errorMessage = 'Unable to delete user.'
+    }));
+  }
+
+  updateUser(): void {
+    this.formErrorMessage = '';
+    this.successMessage = '';
+    if (!this.selectedUser || this.editUserForm.invalid) {
+      this.editUserForm.markAllAsTouched();
+      this.formErrorMessage = 'Please fix the highlighted fields.';
+      return;
+    }
+    this.userApi.update(this.selectedUser.id, this.mapUpdateUserRequest()).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedUser) => {
+        this.successMessage = 'User updated.';
+        this.users = this.users.map((user) => user.id === updatedUser.id ? updatedUser : user);
+        this.updateUserPresentation();
+        this.refreshCurrentUserIfNeeded(updatedUser);
+        this.selectedUser = null;
+        this.updateRoleOptions();
+        this.editUserForm.reset({ roleIds: [], isActive: true, assignedMapZoom: 11 });
+        this.workflowTabIndex = 0;
+      },
+      error: () => this.formErrorMessage = 'Unable to update user.'
+    });
+  }
+
+  cancelUserEdit(): void {
+    this.selectedUser = null;
+    this.updateRoleOptions();
+    this.formErrorMessage = '';
+    this.editUserForm.reset({ roleIds: [], isActive: true, assignedMapZoom: 11 });
+    this.workflowTabIndex = 0;
   }
 
   updateAssignedArea(): void {
@@ -154,8 +253,12 @@ export class UsersComponent implements OnInit, OnDestroy {
         next: (updatedUser) => {
           this.successMessage = 'Assigned area updated.';
           this.users = this.users.map((user) => user.id === updatedUser.id ? updatedUser : user);
-          this.selectUser(updatedUser);
+          this.updateUserPresentation();
           this.refreshCurrentUserIfNeeded(updatedUser);
+          this.assignedAreaForm.reset({ assignedLocationName: '', assignedLatitude: null, assignedLongitude: null, assignedMapZoom: 11 });
+          this.selectedUser = null;
+          this.updateRoleOptions();
+          this.workflowTabIndex = 0;
         },
         error: () => {
           this.formErrorMessage = 'Unable to update assigned area.';
@@ -163,16 +266,17 @@ export class UsersComponent implements OnInit, OnDestroy {
       });
   }
 
-  getAssignedAreaLabel(user: User): string {
-    if (user.assignedLocationName) {
-      return user.assignedLocationName;
-    }
-
-    if (user.assignedLatitude !== null && user.assignedLongitude !== null) {
-      return `${user.assignedLatitude}, ${user.assignedLongitude}`;
-    }
-
-    return '-';
+  cancelAssignedArea(): void {
+    this.selectedUser = null;
+    this.updateRoleOptions();
+    this.formErrorMessage = '';
+    this.assignedAreaForm.reset({
+      assignedLocationName: '',
+      assignedLatitude: null,
+      assignedLongitude: null,
+      assignedMapZoom: 11
+    });
+    this.workflowTabIndex = 0;
   }
 
   private mapLoadData(result: PagedResult<User>): void {
@@ -180,6 +284,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.totalCount = result.totalCount;
     this.pageIndex = result.pageNumber - 1;
     this.pageSize = result.pageSize;
+    this.updateUserPresentation();
   }
 
   private mapCreateUserRequest(): CreateUserRequest {
@@ -188,7 +293,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       fullName: value.fullName,
       email: value.email,
       password: value.password,
-      role: value.role,
+      roleIds: value.roleIds,
       isActive: value.isActive,
       assignedLocationName: value.assignedLocationName || null,
       assignedLatitude: value.assignedLatitude,
@@ -207,6 +312,16 @@ export class UsersComponent implements OnInit, OnDestroy {
     };
   }
 
+  private mapUpdateUserRequest(): UpdateUserRequest {
+    const value = this.editUserForm.getRawValue();
+    return {
+      fullName: value.fullName, email: value.email, password: value.password || null, roleIds: value.roleIds,
+      isActive: value.isActive, assignedLocationName: value.assignedLocationName || null,
+      assignedLatitude: value.assignedLatitude, assignedLongitude: value.assignedLongitude,
+      assignedMapZoom: value.assignedMapZoom
+    };
+  }
+
   private refreshCurrentUserIfNeeded(updatedUser: User): void {
     if (this.authService.currentUser?.id !== updatedUser.id) {
       return;
@@ -215,5 +330,47 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.authService.refreshCurrentUser()
       .pipe(takeUntil(this.destroy$))
       .subscribe();
+  }
+
+  private isAdministrativeUser(user: User): boolean {
+    const permissions = user.roles.flatMap((role) => role.permissions);
+    return permissions.includes(PermissionCodes.Master) || (
+      permissions.includes(PermissionCodes.UsersWrite) &&
+      permissions.includes(PermissionCodes.RolesWrite)
+    );
+  }
+
+  private isAdministrativeRole(role: Role): boolean {
+    return role.permissions.includes(PermissionCodes.Master) || (
+      role.permissions.includes(PermissionCodes.UsersWrite) &&
+      role.permissions.includes(PermissionCodes.RolesWrite)
+    );
+  }
+
+  private updateRoleOptions(): void {
+    this.createRoleOptions = this.canManageAllUsers
+      ? this.roleOptions
+      : this.roleOptions.filter((role) => !this.isAdministrativeRole(role));
+
+    this.editRoleOptions = !this.canManageAllUsers && this.selectedUser?.id === this.authService.currentUser?.id
+      ? this.roleOptions.filter((role) => !role.permissions.includes(PermissionCodes.Master))
+      : this.createRoleOptions;
+  }
+
+  private updateUserPresentation(): void {
+    const currentUserId = this.authService.currentUser?.id;
+    this.roleLabels = Object.fromEntries(
+      this.users.map((user) => [user.id, user.roles.map((role) => role.name).join(', ') || '-'])
+    );
+    this.assignedAreaLabels = Object.fromEntries(this.users.map((user) => [user.id,
+      user.assignedLocationName || (
+        user.assignedLatitude !== null && user.assignedLongitude !== null
+          ? `${user.assignedLatitude}, ${user.assignedLongitude}`
+          : '-'
+      )
+    ]));
+    this.editableUsers = Object.fromEntries(this.users.map((user) => [user.id,
+      this.canManageAllUsers || user.id === currentUserId || !this.isAdministrativeUser(user)
+    ]));
   }
 }

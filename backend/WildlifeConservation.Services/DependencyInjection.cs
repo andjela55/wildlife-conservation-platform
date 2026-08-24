@@ -20,6 +20,17 @@ public static class DependencyInjection
     {
         services.AddAutoMapper(_ => { }, typeof(ModelAssemblyMarker).Assembly);
 
+        services.AddScoped<ISpeciesValidationService, SpeciesValidationService>();
+        services.AddScoped<ISubspeciesValidationService, SubspeciesValidationService>();
+        services.AddScoped<IAnimalValidationService, AnimalValidationService>();
+        services.AddScoped<IAuthValidationService, AuthValidationService>();
+        services.AddScoped<ICollarValidationService, CollarValidationService>();
+        services.AddScoped<ICollarAssignmentValidationService, CollarAssignmentValidationService>();
+        services.AddScoped<ILocationPointValidationService, LocationPointValidationService>();
+        services.AddScoped<IRangerReportValidationService, RangerReportValidationService>();
+        services.AddScoped<IAlertValidationService, AlertValidationService>();
+        services.AddScoped<IUserValidationService, UserValidationService>();
+
         services.AddScoped<ISpeciesService, SpeciesService>();
         services.AddScoped<ISubspeciesService, SubspeciesService>();
         services.AddScoped<IAnimalService, AnimalService>();
@@ -31,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
 
         return services;
     }

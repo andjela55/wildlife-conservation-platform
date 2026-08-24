@@ -1,0 +1,28 @@
+<div class="searchable-select">
+  <mat-form-field appearance="outline">
+    <mat-label>{{ label }}</mat-label>
+    <input
+      matInput
+      type="text"
+      autocomplete="off"
+      [formControl]="searchControl"
+      valueAfterTyping
+      (typed)="filter($event)"
+      (focus)="open()"
+      (blur)="close()"
+    />
+  </mat-form-field>
+
+  <div *ngIf="isOpen" class="searchable-options" role="listbox">
+    <div
+      *ngFor="let option of filteredOptions"
+      class="searchable-option"
+      role="option"
+      [class.selected]="option.value === selectedValue"
+      (mousedown)="selectOption($event, option)"
+    >
+      {{ option.label }}
+    </div>
+    <div *ngIf="!filteredOptions.length" class="searchable-empty">No matching options</div>
+  </div>
+</div>

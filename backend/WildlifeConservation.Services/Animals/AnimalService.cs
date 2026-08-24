@@ -2,11 +2,12 @@ namespace WildlifeConservation.Services.Animals;
 
 public class AnimalService(
     IAnimalRepository animalRepository,
-    ISubspeciesRepository subspeciesRepository,
-    ILocationPointRepository locationPointRepository,
-    IRangerReportRepository rangerReportRepository,
+    IAnimalValidationService validationService,
+    IMapper mapper,
     IAlertRepository alertRepository,
-    IMapper mapper) : IAnimalService
+    IRangerReportRepository rangerReportRepository,
+    ILocationPointRepository locationPointRepository,
+    ICollarAssignmentRepository collarAssignmentRepository) : IAnimalService
 {
     public async Task<PagedResult<Animal>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
@@ -17,78 +18,54 @@ public class AnimalService(
 
     public async Task<Animal> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var animal = await animalRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return animal is null
-            ? throw new ServiceException((int)HttpStatusCode.NotFound, $"Animal with id {id} was not found.")
-            : animal;
+        return await validationService.GetRequiredAsync(id, cancellationToken);
     }
 
-    public async Task<Animal> CreateAsync(CreateAnimalDto dto, CancellationToken cancellationToken = default)
+    public async Task<Animal> CreateAsync(UpsertAnimalDto dto, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(
-            subspeciesRepository.GetByIdAsync(dto.SubspeciesId, cancellationToken),
-            dto.SubspeciesId,
-            "Subspecies");
+        await validationService.ValidateUpsertAsync(dto, cancellationToken);
 
         var animal = mapper.Map<Animal>(dto);
-        animal.Name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        animal.DateOfBirth = ServiceHelpers.AsUtc(dto.DateOfBirth);
-        animal.Notes = dto.Notes?.Trim();
 
         animal = await animalRepository.InsertAsync(animal, cancellationToken);
 
         return animal;
     }
 
-    public async Task<Animal> UpdateAsync(int id, UpdateAnimalDto dto, CancellationToken cancellationToken = default)
+    public async Task<Animal> UpdateAsync(int id, UpsertAnimalDto dto, CancellationToken cancellationToken = default)
     {
-        var animal = await animalRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new ServiceException((int)HttpStatusCode.NotFound, $"Animal with id {id} was not found.");
-
-        await ServiceHelpers.EnsureFoundAsync(
-            subspeciesRepository.GetByIdAsync(dto.SubspeciesId, cancellationToken),
-            dto.SubspeciesId,
-            "Subspecies");
+        var animal = await validationService.GetRequiredAsync(id, cancellationToken);
+        await validationService.ValidateUpsertAsync(dto, cancellationToken);
 
         mapper.Map(dto, animal);
-        animal.Name = ServiceHelpers.RequiredText(dto.Name, nameof(dto.Name));
-        animal.DateOfBirth = ServiceHelpers.AsUtc(dto.DateOfBirth);
-        animal.Notes = dto.Notes?.Trim();
 
         animal = await animalRepository.UpdateAsync(animal, cancellationToken);
 
         return animal;
     }
 
-    public async Task<PagedResult<LocationPoint>> GetLocationsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
-
-        return await locationPointRepository.Query()
-            .Where(x => x.AnimalId == id)
-            .OrderByDescending(x => x.RecordedAt)
-            .ToPagedResultAsync(pagination, cancellationToken);
+        var animal = await validationService.GetRequiredAsync(id, cancellationToken);
+        await using var transaction = await animalRepository.StartTransactionAsync(cancellationToken);
+        try
+        {
+            var alerts = await alertRepository.Query().Where(x => x.AnimalId == id).ToListAsync(cancellationToken);
+            var reports = await rangerReportRepository.Query().Where(x => x.AnimalId == id).ToListAsync(cancellationToken);
+            var locations = await locationPointRepository.Query().Where(x => x.AnimalId == id).ToListAsync(cancellationToken);
+            var assignments = await collarAssignmentRepository.Query().Where(x => x.AnimalId == id).ToListAsync(cancellationToken);
+            await alertRepository.DeleteRangeAsync(alerts, cancellationToken);
+            await rangerReportRepository.DeleteRangeAsync(reports, cancellationToken);
+            await locationPointRepository.DeleteRangeAsync(locations, cancellationToken);
+            await collarAssignmentRepository.DeleteRangeAsync(assignments, cancellationToken);
+            await animalRepository.DeleteAsync(animal, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
-    public async Task<PagedResult<RangerReport>> GetReportsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
-    {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
-
-        return await rangerReportRepository.Query()
-            .Where(x => x.AnimalId == id)
-            .OrderByDescending(x => x.CreatedAt)
-            .ToPagedResultAsync(pagination, cancellationToken);
-    }
-
-    public async Task<PagedResult<Alert>> GetAlertsAsync(int id, PaginationQuery pagination, CancellationToken cancellationToken = default)
-    {
-        await ServiceHelpers.EnsureFoundAsync(animalRepository.GetByIdAsync(id, cancellationToken), id, "Animal");
-
-        return await alertRepository.Query()
-            .Where(x => x.AnimalId == id)
-            .OrderByDescending(x => x.CreatedAt)
-            .ToPagedResultAsync(pagination, cancellationToken);
-    }
 }

@@ -4,7 +4,7 @@ export interface Species {
   description: string;
 }
 
-export interface CreateSpeciesRequest {
+export interface UpsertSpeciesRequest {
   name: string;
   description: string;
 }

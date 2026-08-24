@@ -11,14 +11,15 @@ public record CreateRangerReportDto
     public Severity Severity { get; init; } = Severity.Low;
 
     [Range(-90, 90)]
-    public decimal Latitude { get; init; }
+    [Required]
+    public decimal? Latitude { get; init; }
 
     [Range(-180, 180)]
-    public decimal Longitude { get; init; }
+    [Required]
+    public decimal? Longitude { get; init; }
 
     [Required]
     [StringLength(2000)]
     public string Description { get; init; } = string.Empty;
 
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }

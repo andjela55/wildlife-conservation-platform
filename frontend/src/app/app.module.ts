@@ -18,6 +18,10 @@ import { UsersComponent } from './features/users.component';
 import { EnumLabelPipe } from './core/pipes/enum-label.pipe';
 import { MaterialModule } from './material.module';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { SearchableSelectComponent } from './shared/searchable-select/searchable-select.component';
+import { TypingTimeDirective } from './shared/directives/typing-time.directive';
+import { BelgradeDatePipe } from './core/pipes/belgrade-date.pipe';
+import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +35,11 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
     AuthComponent,
     LoginComponent,
     UsersComponent,
-    EnumLabelPipe
+    EnumLabelPipe,
+    SearchableSelectComponent,
+    TypingTimeDirective,
+    BelgradeDatePipe,
+    ConfirmDialogComponent
   ],
   imports: [
     BrowserModule,

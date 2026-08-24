@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IRangerReportRepository, RangerReportRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         return services;
     }

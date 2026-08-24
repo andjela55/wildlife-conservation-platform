@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
-import { Animal, CreateRangerReportRequest, PagedResult, RangerReport, reportTypeOptions, Severity, severityOptions } from '../../core/models';
+import { Animal, CreateRangerReportRequest, PagedResult, PermissionCodes, RangerReport, reportTypeOptions, severityOptions } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { RangerReportApiService } from '../../core/services/ranger-report-api.service';
-import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 import { enumKey } from '../../core/utils/enum-utils';
+import { SearchableSelectOption } from '../../shared/searchable-select/searchable-select.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-reports',
@@ -16,7 +17,10 @@ import { enumKey } from '../../core/utils/enum-utils';
 export class ReportsComponent implements OnInit, OnDestroy {
   reports: Array<RangerReport> = [];
   animals: Array<Animal> = [];
-  reportColumns: Array<string> = ['subject', 'type', 'severity', 'createdAt', 'description'];
+  animalOptions: Array<SearchableSelectOption> = [];
+  animalNames: Record<number, string> = {};
+  severityClasses: Record<number, string> = {};
+  reportColumns: Array<string> = ['subject', 'type', 'severity', 'latitude', 'longitude', 'createdAt', 'description'];
   reportTypeOptions = reportTypeOptions;
   severityOptions = severityOptions;
   pageSizeOptions: Array<number> = [5, 10, 20];
@@ -33,37 +37,28 @@ export class ReportsComponent implements OnInit, OnDestroy {
     animalId: [null],
     reportType: ['Sighting', Validators.required],
     severity: ['Low', Validators.required],
-    latitude: [0, [Validators.required, Validators.min(-90), Validators.max(90)]],
-    longitude: [0, [Validators.required, Validators.min(-180), Validators.max(180)]],
-    description: ['', [Validators.required, Validators.maxLength(2000)]],
-    createdAt: [toLocalDateTimeInputValue(), Validators.required]
+    latitude: [null, [Validators.required, Validators.min(-90), Validators.max(90)]],
+    longitude: [null, [Validators.required, Validators.min(-180), Validators.max(180)]],
+    description: ['', [Validators.required, Validators.maxLength(2000)]]
   });
 
   constructor(
     private readonly rangerReportApi: RangerReportApiService,
     private readonly animalApi: AnimalApiService,
+    private readonly authService: AuthService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
+  canCreateReports = false;
+
   ngOnInit(): void {
+    this.canCreateReports = this.authService.hasPermission(PermissionCodes.RangerReportsWrite);
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  getAnimalName(animalId: number | null): string {
-    if (!animalId) {
-      return 'Area report';
-    }
-
-    return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
-  }
-
-  getSeverityClass(severity: Severity): string {
-    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   refresh(): void {
@@ -118,9 +113,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
             animalId: null,
             reportType: 'Sighting',
             severity: 'Low',
-            latitude: 0,
-            longitude: 0,
-            createdAt: toLocalDateTimeInputValue()
+            latitude: null,
+            longitude: null
           });
           this.refresh();
         },
@@ -136,6 +130,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.reportPageIndex = result.reports.pageNumber - 1;
     this.reportPageSize = result.reports.pageSize;
     this.animals = result.animals;
+    this.animalOptions = [
+      { value: null, label: 'Area report (no animal)' },
+      ...this.animals.map((animal) => ({ value: animal.id, label: animal.name }))
+    ];
+    this.animalNames = Object.fromEntries(this.animals.map((animal) => [animal.id, animal.name]));
+    this.severityClasses = Object.fromEntries(
+      this.reports.map((report) => [report.id, enumKey(report.severity, 'Severity').toLowerCase()])
+    );
   }
 
   private mapCreateReportRequest(): CreateRangerReportRequest {
@@ -146,8 +148,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       severity: value.severity,
       latitude: value.latitude,
       longitude: value.longitude,
-      description: value.description,
-      createdAt: localDateTimeInputToIso(value.createdAt)
+      description: value.description
     };
   }
 }

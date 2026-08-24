@@ -5,7 +5,7 @@ export interface Subspecies {
   description: string;
 }
 
-export interface CreateSubspeciesRequest {
+export interface UpsertSubspeciesRequest {
   speciesId: number;
   name: string;
   description: string;

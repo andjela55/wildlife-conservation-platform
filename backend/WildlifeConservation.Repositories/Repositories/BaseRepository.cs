@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using WildlifeConservation.Repositories.Data;
 
 namespace WildlifeConservation.Repositories.Repositories;
@@ -14,6 +15,16 @@ public abstract class BaseRepository<TEntity>
         this.dbContext = dbContext;
         DbSet = dbContext.Set<TEntity>();
     }
+
+    protected DbSet<T> Set<T>() where T : class => dbContext.Set<T>();
+
+    protected Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        dbContext.SaveChangesAsync(cancellationToken);
+
+    protected void ClearTracking() => dbContext.ChangeTracker.Clear();
+
+    public Task<IDbContextTransaction> StartTransactionAsync(CancellationToken cancellationToken = default) =>
+        dbContext.Database.BeginTransactionAsync(cancellationToken);
 
     public IQueryable<TEntity> Query() => DbSet.AsNoTracking().AsQueryable();
 
