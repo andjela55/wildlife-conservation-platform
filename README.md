@@ -102,6 +102,17 @@ Backend policies and frontend guards check effective permissions rather than rol
 
 The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/location-points` also accepts an `X-Device-Key` header. This represents device-level collar authentication without requiring the ESP8266 simulator to obtain and refresh a user JWT. The location-point read endpoints continue to require an authenticated application user.
 
+### Permission Matrix
+
+| Role | Access |
+| --- | --- |
+| Master | Unrestricted access to protected application endpoints. Can manage all users, including Admin and Master users. |
+| Admin | Full conservation-domain access. Can manage Ranger and Researcher users and their own account, but cannot modify other Admin or Master users or assign the Master role. |
+| Ranger | Can manage animals, collars, collar assignments, alerts, ranger reports, species, and subspecies. Location-point ingestion is device-key protected. Cannot manage users or roles. |
+| Researcher | Read-only access to conservation data. Has no application write permissions. |
+
+Authorization is enforced on the backend; frontend guards only control navigation and visibility. A device key is a separate authentication mechanism and is not equivalent to a user role.
+
 ## Backend Solution Structure
 
 - `WildlifeConservation.Api`
@@ -146,9 +157,36 @@ The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/locat
 - New location points are saved before SignalR broadcasts are sent.
 - Services must not broadcast a location update until the database save succeeds.
 
+## Testing
+
+Run the backend tests from `backend/`:
+
+```powershell
+dotnet test WildlifeConservationPlatform.sln
+```
+
+The current test suite covers permission authorization, role seed configuration, service registration, and user validation. PostgreSQL-backed integration coverage for transactional deletes, device authentication, and end-to-end authorization is a planned next step.
+
+Build the frontend from `frontend/`:
+
+```powershell
+npm ci
+npm run build
+```
+
 ## Data Retention And Deletes
 
 For the MVP, delete operations physically remove dependent demo data inside a database transaction to keep referential integrity consistent. In a production version, most destructive deletes should be replaced with soft-delete or archive states, especially for animals, collars, location history, ranger reports, alerts, and users, because conservation systems need historical traceability.
+
+
+## Production Roadmap
+
+- Replace destructive deletes with archive/soft-delete workflows and immutable audit records.
+- Add PostgreSQL integration tests and transactional-delete scenarios.
+- Add device registration, per-device credentials, key rotation, rate limiting, and replay protection.
+- Add health checks, structured redacted logging, metrics, and request correlation IDs.
+- Add CI/CD, Docker Compose development setup, and production deployment documentation.
+- Add spatial indexing and richer geospatial queries as tracking data volume grows.
 
 ## Run Locally
 
@@ -158,35 +196,41 @@ Prerequisites are .NET 8, Node.js/npm, and PostgreSQL.
 
 Run backend commands from the repository root:
 
-powershell
+```powershell
 cd backend
+```
 
 
 Configure local settings through .NET user-secrets or environment variables. Do not commit real database passwords, JWT keys, or device keys. The following values are local examples only:
 
-powershell
+```powershell
 cd WildlifeConservation.Api
 dotnet user-secrets set 'Jwt:Key' 'replace-with-a-long-random-development-secret'
 dotnet user-secrets set 'DeviceApiKey' 'replace-with-a-separate-random-device-key'
 cd ..
+```
 
 
 Apply migrations:
 
-powershell
+```powershell
 dotnet ef database update --project WildlifeConservation.Repositories\WildlifeConservation.Repositories.csproj --startup-project WildlifeConservation.Api\WildlifeConservation.Api.csproj
+```
 
 
 Start the API:
 
-powershell
+```powershell
 dotnet run --project WildlifeConservation.Api\WildlifeConservation.Api.csproj
+```
 
 
 Swagger:
 
+```text
 http://localhost:5191/swagger
 https://localhost:7246/swagger
+```
 
 
 In the Development environment, the API also applies pending migrations at startup.
@@ -195,10 +239,11 @@ In the Development environment, the API also applies pending migrations at start
 
 Start Angular from a second terminal:
 
-powershell
+```powershell
 cd frontend
 npm install
 npm start
+```
 
 
 The frontend runs at `http://localhost:4200`. Its development environment connects to the API and authenticated SignalR hub at `http://localhost:5191`; `proxy.conf.json` is also available for proxied `/api` requests.
@@ -215,17 +260,19 @@ Wi-Fi credentials and the device key belong in the ignored `include/secrets.h` f
 
 Backend:
 
-powershell
+```powershell
 cd backend
 dotnet build WildlifeConservationPlatform.sln
 dotnet test WildlifeConservationPlatform.sln
+```
 
 
 Frontend:
 
-powershell
+```powershell
 cd frontend
 npm run build
+```
 
 
 ## Main Endpoints
@@ -235,20 +282,23 @@ npm run build
 - `GET /api/species`
 - `GET /api/species/{id}`
 - `POST /api/species`
+- `PUT /api/species/{id}`
+- `DELETE /api/species/{id}`
 - `GET /api/subspecies`
 - `GET /api/subspecies/{id}`
 - `POST /api/subspecies`
+- `PUT /api/subspecies/{id}`
+- `DELETE /api/subspecies/{id}`
 - `GET /api/animals`
 - `GET /api/animals/{id}`
 - `POST /api/animals`
 - `PUT /api/animals/{id}`
-- `GET /api/animals/{id}/locations`
-- `GET /api/animals/{id}/reports`
-- `GET /api/animals/{id}/alerts`
+- `DELETE /api/animals/{id}`
 - `GET /api/collars`
 - `GET /api/collars/{id}`
 - `POST /api/collars`
 - `PUT /api/collars/{id}`
+- `DELETE /api/collars/{id}`
 - `POST /api/collar-assignments`
 - `PUT /api/collar-assignments/{id}/unassign`
 - `POST /api/location-points`
@@ -257,10 +307,16 @@ npm run build
 - `GET /api/ranger-reports`
 - `GET /api/ranger-reports/{id}`
 - `POST /api/ranger-reports`
+- `GET /api/ranger-reports/by-animal/{animalId}`
 - `GET /api/alerts`
 - `GET /api/alerts/{id}`
 - `POST /api/alerts`
 - `PUT /api/alerts/{id}/resolve`
+- `GET /api/users`
+- `POST /api/users`
+- `PUT /api/users/{id}`
+- `PUT /api/users/{id}/assigned-area`
+- `DELETE /api/users/{id}`
 
 ## Current Status
 
