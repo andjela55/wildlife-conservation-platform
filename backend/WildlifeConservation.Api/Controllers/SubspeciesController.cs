@@ -35,4 +35,12 @@ public class SubspeciesController(ISubspeciesService subspeciesService, IMapper 
     {
         return Ok(mapper.Map<SubspeciesResponseDto>(await subspeciesService.UpdateAsync(id, dto, cancellationToken)));
     }
+
+    [HttpDelete("{id:int}")]
+    [Permission(PermissionCode.SubspeciesWrite)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await subspeciesService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

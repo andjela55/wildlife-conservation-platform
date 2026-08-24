@@ -3,7 +3,10 @@ namespace WildlifeConservation.Services.Collars;
 public class CollarService(
     ICollarRepository collarRepository,
     ICollarValidationService validationService,
-    IMapper mapper) : ICollarService
+    IMapper mapper,
+    IAlertRepository alertRepository,
+    ILocationPointRepository locationPointRepository,
+    ICollarAssignmentRepository collarAssignmentRepository) : ICollarService
 {
     public async Task<PagedResult<Collar>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
@@ -37,5 +40,27 @@ public class CollarService(
         collar = await collarRepository.UpdateAsync(collar, cancellationToken);
 
         return collar;
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var collar = await validationService.GetRequiredAsync(id, cancellationToken);
+        await using var transaction = await collarRepository.StartTransactionAsync(cancellationToken);
+        try
+        {
+            var alerts = await alertRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            var locations = await locationPointRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            var assignments = await collarAssignmentRepository.Query().Where(x => x.CollarId == id).ToListAsync(cancellationToken);
+            await alertRepository.DeleteRangeAsync(alerts, cancellationToken);
+            await locationPointRepository.DeleteRangeAsync(locations, cancellationToken);
+            await collarAssignmentRepository.DeleteRangeAsync(assignments, cancellationToken);
+            await collarRepository.DeleteAsync(collar, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

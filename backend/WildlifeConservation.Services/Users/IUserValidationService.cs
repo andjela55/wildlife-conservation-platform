@@ -13,6 +13,7 @@ public interface IUserValidationService
         UpdateUserDto dto,
         int actorUserId,
         CancellationToken cancellationToken);
+    Task<User> ValidateDeleteAsync(int userId, int actorUserId, CancellationToken cancellationToken);
     void EnsureCanModify(User actor, User target);
     void EnsureCanAssignRoles(User actor, IReadOnlyCollection<Role> roles, bool isSelf);
 }

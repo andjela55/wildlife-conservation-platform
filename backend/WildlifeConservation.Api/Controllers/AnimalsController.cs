@@ -37,4 +37,12 @@ public class AnimalsController(IAnimalService animalService, IMapper mapper) : C
         return Ok(mapper.Map<AnimalResponseDto>(animal));
     }
 
+    [HttpDelete("{id:int}")]
+    [Permission(PermissionCode.AnimalsWrite)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await animalService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
+
 }

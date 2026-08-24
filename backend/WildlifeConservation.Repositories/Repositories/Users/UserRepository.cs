@@ -12,6 +12,9 @@ public interface IUserRepository
     Task<User> InsertAsync(User entity, IReadOnlyCollection<int> roleIds, CancellationToken cancellationToken = default);
     Task<User> UpdateAsync(User entity, CancellationToken cancellationToken = default);
     Task<User> UpdateAsync(User entity, IReadOnlyCollection<int> roleIds, CancellationToken cancellationToken = default);
+    Task DeleteAsync(User entity, CancellationToken cancellationToken = default);
+    Task DeleteRangeAsync(List<User> entities, CancellationToken cancellationToken = default);
+    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> StartTransactionAsync(CancellationToken cancellationToken = default);
     Task<bool> HasAnyPermissionAsync(int userId, IReadOnlyCollection<PermissionCode> permissionCodes, CancellationToken cancellationToken = default);
 }
 

@@ -6,4 +6,5 @@ public interface ISpeciesService
     Task<Models.Species.Species> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Models.Species.Species> CreateAsync(UpsertSpeciesDto dto, CancellationToken cancellationToken = default);
     Task<Models.Species.Species> UpdateAsync(int id, UpsertSpeciesDto dto, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

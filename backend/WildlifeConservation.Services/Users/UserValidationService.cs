@@ -40,6 +40,19 @@ public class UserValidationService(IUserRepository userRepository, IRoleReposito
         return user;
     }
 
+    public async Task<User> ValidateDeleteAsync(int userId, int actorUserId, CancellationToken cancellationToken)
+    {
+        var actor = await GetActorAsync(actorUserId, cancellationToken);
+        var user = await GetUserAsync(userId, cancellationToken);
+        EnsureCanModify(actor, user);
+        if (actor.Id == user.Id)
+        {
+            throw new ServiceException((int)HttpStatusCode.BadRequest, "You cannot delete your own user account.");
+        }
+
+        return user;
+    }
+
     public void EnsureCanModify(User actor, User target)
     {
         if (HasPermission(actor, PermissionCode.Master) || actor.Id == target.Id)

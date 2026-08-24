@@ -28,6 +28,13 @@ public class UsersController(IUserService userService, IMapper mapper) : Control
         return Ok(mapper.Map<UserResponseDto>(await userService.UpdateAsync(id, dto, User.GetCurrentUserId(), cancellationToken)));
     }
 
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await userService.DeleteAsync(id, User.GetCurrentUserId(), cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("{id:int}/assigned-area")]
     public async Task<ActionResult<UserResponseDto>> UpdateAssignedArea(int id, UpdateUserAssignedAreaDto dto, CancellationToken cancellationToken)
     {

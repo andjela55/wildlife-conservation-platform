@@ -19,6 +19,10 @@ public class RangerReportValidationService(
         await ServiceHelpers.EnsureFoundAsync(
             userRepository.GetByIdAsync(userId, cancellationToken), userId, "User");
         ServiceHelpers.RequiredText(dto.Description, nameof(dto.Description));
+        if (dto.Latitude is null || dto.Longitude is null)
+        {
+            throw new ServiceException((int)HttpStatusCode.BadRequest, "Latitude and longitude are required.");
+        }
     }
 
     public async Task ValidateAnimalAsync(int animalId, CancellationToken cancellationToken)

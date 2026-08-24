@@ -6,4 +6,5 @@ public interface ICollarService
     Task<Collar> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Collar> CreateAsync(UpsertCollarDto dto, CancellationToken cancellationToken = default);
     Task<Collar> UpdateAsync(int id, UpsertCollarDto dto, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

@@ -35,4 +35,12 @@ public class SpeciesController(ISpeciesService speciesService, IMapper mapper) :
     {
         return Ok(mapper.Map<SpeciesResponseDto>(await speciesService.UpdateAsync(id, dto, cancellationToken)));
     }
+
+    [HttpDelete("{id:int}")]
+    [Permission(PermissionCode.SpeciesWrite)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await speciesService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

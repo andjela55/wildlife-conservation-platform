@@ -36,4 +36,12 @@ public class CollarsController(ICollarService collarService, IMapper mapper) : C
         var collar = await collarService.UpdateAsync(id, dto, cancellationToken);
         return Ok(mapper.Map<CollarResponseDto>(collar));
     }
+
+    [HttpDelete("{id:int}")]
+    [Permission(PermissionCode.CollarsWrite)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await collarService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }
