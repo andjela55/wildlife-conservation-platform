@@ -34,6 +34,10 @@ export abstract class BaseApiService<T, TCreate, TUpdate = TCreate> {
     return this.http.put<T>(`${this.baseUrl}/${id}`, request);
   }
 
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
   protected createPaginationParams(pagination: PaginationQuery = {}): HttpParams {
     return new HttpParams()
       .set('pageNumber', String(pagination.pageNumber ?? 1))

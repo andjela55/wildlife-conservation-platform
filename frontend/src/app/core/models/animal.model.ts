@@ -10,7 +10,7 @@ export interface Animal {
   isActive: boolean;
 }
 
-export interface CreateAnimalRequest {
+export interface UpsertAnimalRequest {
   name: string;
   subspeciesId: number;
   sex: AnimalSex;
@@ -18,5 +18,3 @@ export interface CreateAnimalRequest {
   notes: string | null;
   isActive: boolean;
 }
-
-export type UpdateAnimalRequest = CreateAnimalRequest;

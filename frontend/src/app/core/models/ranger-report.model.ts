@@ -20,5 +20,4 @@ export interface CreateRangerReportRequest {
   latitude: number;
   longitude: number;
   description: string;
-  createdAt: string;
 }

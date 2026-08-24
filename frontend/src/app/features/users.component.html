@@ -24,12 +24,12 @@
             <td mat-cell *matCellDef="let user">{{ user.email }}</td>
           </ng-container>
           <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef>Role</th>
-            <td mat-cell *matCellDef="let user">{{ user.role | enumLabel:'UserRole' }}</td>
+            <th mat-header-cell *matHeaderCellDef>Roles</th>
+            <td mat-cell *matCellDef="let user">{{ roleLabels[user.id] }}</td>
           </ng-container>
           <ng-container matColumnDef="assignedArea">
             <th mat-header-cell *matHeaderCellDef>Assigned area</th>
-            <td mat-cell *matCellDef="let user">{{ getAssignedAreaLabel(user) }}</td>
+            <td mat-cell *matCellDef="let user">{{ assignedAreaLabels[user.id] }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -39,8 +39,12 @@
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let user">
-              <button mat-stroked-button type="button" (click)="selectUser(user)">Edit area</button>
+            <td mat-cell class="actions-cell" *matCellDef="let user">
+              <div class="user-row-actions">
+                <button *ngIf="editableUsers[user.id]" mat-stroked-button type="button" (click)="selectUser(user)">Edit</button>
+                <button *ngIf="editableUsers[user.id]" mat-stroked-button color="warn" type="button" (click)="deleteUser(user)">Delete</button>
+                <button *ngIf="editableUsers[user.id]" mat-stroked-button class="area-action" type="button" (click)="selectUserArea(user)">Edit area</button>
+              </div>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
@@ -60,7 +64,7 @@
       </ng-template>
     </section>
 
-    <section class="panel workflow-panel">
+    <section class="panel workflow-panel" *ngIf="canManageUsers">
       <mat-tab-group [mat-stretch-tabs]="false" [(selectedIndex)]="workflowTabIndex">
         <mat-tab label="Create">
           <form class="form-grid tab-form" [formGroup]="userForm" (ngSubmit)="createUser()">
@@ -77,19 +81,21 @@
               <input matInput type="email" autocomplete="off" formControlName="email" />
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Temporary password</mat-label>
+              <mat-label>Initial password</mat-label>
               <input matInput type="password" autocomplete="new-password" formControlName="password" />
+              <mat-hint>Required; 8–100 characters.</mat-hint>
             </mat-form-field>
             <div class="form-row">
               <mat-form-field appearance="outline">
-                <mat-label>Role</mat-label>
-                <mat-select formControlName="role">
-                  <mat-option *ngFor="let option of userRoleOptions" [value]="option">{{ option | enumLabel:'UserRole' }}</mat-option>
+                <mat-label>Roles</mat-label>
+                <mat-select formControlName="roleIds" multiple>
+                  <mat-option *ngFor="let option of createRoleOptions" [value]="option.id">{{ option.name }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Area zoom</mat-label>
                 <input matInput type="number" formControlName="assignedMapZoom" />
+                <mat-hint>1 shows a wide area; 18 is street-level detail.</mat-hint>
               </mat-form-field>
             </div>
             <mat-form-field appearance="outline">
@@ -111,6 +117,30 @@
           </form>
         </mat-tab>
 
+        <mat-tab label="Edit User">
+          <form *ngIf="selectedUser; else selectEditUserPrompt" class="form-grid tab-form" [formGroup]="editUserForm" (ngSubmit)="updateUser()">
+            <p class="selected-user">{{ selectedUser.fullName }}</p>
+            <mat-form-field appearance="outline"><mat-label>Full name</mat-label><input matInput formControlName="fullName" maxlength="160" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput type="email" formControlName="email" maxlength="200" /><mat-hint>Required and unique.</mat-hint></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>New password</mat-label><input matInput type="password" autocomplete="new-password" formControlName="password" /><mat-hint>Leave blank to keep the current password; otherwise 8–100 characters.</mat-hint></mat-form-field>
+            <div class="form-row">
+              <mat-form-field appearance="outline"><mat-label>Roles</mat-label><mat-select formControlName="roleIds" multiple><mat-option *ngFor="let option of editRoleOptions" [value]="option.id">{{ option.name }}</mat-option></mat-select><mat-hint>Permissions are granted through all assigned roles.</mat-hint></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Area zoom</mat-label><input matInput type="number" formControlName="assignedMapZoom" /><mat-hint>Between 1 and 18.</mat-hint></mat-form-field>
+            </div>
+            <mat-form-field appearance="outline"><mat-label>Assigned area name</mat-label><input matInput formControlName="assignedLocationName" /><mat-hint>Optional.</mat-hint></mat-form-field>
+            <div class="form-row">
+              <mat-form-field appearance="outline"><mat-label>Latitude</mat-label><input matInput type="number" step="0.000001" formControlName="assignedLatitude" /><mat-hint>-90 to 90; set with longitude.</mat-hint></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Longitude</mat-label><input matInput type="number" step="0.000001" formControlName="assignedLongitude" /><mat-hint>-180 to 180; set with latitude.</mat-hint></mat-form-field>
+            </div>
+            <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+            <div class="actions">
+              <button mat-raised-button color="primary" type="submit">Save user</button>
+              <button mat-stroked-button type="button" (click)="cancelUserEdit()">Cancel</button>
+            </div>
+          </form>
+          <ng-template #selectEditUserPrompt><div class="empty tab-empty">Select Edit for a user in the table.</div></ng-template>
+        </mat-tab>
+
         <mat-tab label="Assigned Area">
           <div class="tab-form" *ngIf="selectedUser; else selectUserPrompt">
             <p class="selected-user">{{ selectedUser.fullName }}</p>
@@ -127,17 +157,23 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Latitude</mat-label>
                   <input matInput type="number" step="0.000001" formControlName="assignedLatitude" />
+                  <mat-hint>-90 to 90; set with longitude.</mat-hint>
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Longitude</mat-label>
                   <input matInput type="number" step="0.000001" formControlName="assignedLongitude" />
+                  <mat-hint>-180 to 180; set with latitude.</mat-hint>
                 </mat-form-field>
               </div>
               <mat-form-field appearance="outline">
                 <mat-label>Map zoom</mat-label>
                 <input matInput type="number" formControlName="assignedMapZoom" />
+                <mat-hint>1 is wide; 18 is close. Default is 11.</mat-hint>
               </mat-form-field>
-              <button mat-raised-button color="primary" type="submit">Save assigned area</button>
+              <div class="actions">
+                <button mat-raised-button color="primary" type="submit">Save assigned area</button>
+                <button mat-stroked-button type="button" (click)="cancelAssignedArea()">Cancel</button>
+              </div>
             </form>
           </div>
           <ng-template #selectUserPrompt>

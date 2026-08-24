@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, take } from 'rxjs';
+import { finalize } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
 
 @Component({
@@ -37,17 +37,20 @@ export class LoginComponent {
     this.isLoading = true;
     this.authService.login(this.loginForm.getRawValue())
       .pipe(
-        take(1),
         finalize(() => (this.isLoading = false))
       )
       .subscribe({
         next: () => {
-          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
+          const returnUrl = this.getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
           void this.router.navigateByUrl(returnUrl);
         },
         error: () => {
           this.errorMessage = 'Invalid email or password.';
         }
       });
+  }
+
+  private getSafeReturnUrl(returnUrl: string | null): string {
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/';
   }
 }

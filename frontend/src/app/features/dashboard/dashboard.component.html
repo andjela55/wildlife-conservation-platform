@@ -6,11 +6,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="date-button secondary" type="button">
-        Current data
-      </button>
-
-      <a class="add-report-button" routerLink="/reports">
+      <a *ngIf="canCreateReports" class="add-report-button" routerLink="/reports">
         Add Report
       </a>
     </div>
@@ -92,14 +88,14 @@
       <aside class="map-side-panel" *ngIf="selectedLocation">
         <div class="map-side-panel-header">
           <div>
-            <h3>{{ getLocationAnimalName(selectedLocation) }}</h3>
+            <h3>{{ selectedLocation.animalName || animalNames[selectedLocation.animalId] || 'Animal #' + selectedLocation.animalId }}</h3>
             <p>Latest collar signal</p>
           </div>
         </div>
 
         <div class="detail-row">
           <span>Animal</span>
-          <strong>{{ getLocationAnimalName(selectedLocation) }}</strong>
+          <strong>{{ selectedLocation.animalName || animalNames[selectedLocation.animalId] || 'Animal #' + selectedLocation.animalId }}</strong>
         </div>
 
         <div class="detail-row">
@@ -114,7 +110,7 @@
 
         <div class="detail-row">
           <span>Last signal</span>
-          <strong>{{ selectedLocation.recordedAt | date: "short" }}</strong>
+          <strong>{{ selectedLocation.recordedAt | belgradeDate }}</strong>
         </div>
 
         <div class="detail-row">
@@ -150,20 +146,20 @@
           <div class="status-item" *ngFor="let alert of recentAlerts">
             <span
               class="alert-badge"
-              [ngClass]="getSeverityClass(alert.severity)"
+              [ngClass]="alertSeverityClasses[alert.id]"
             >
-              <img [src]="getSeverityIcon(alert.severity)" alt="" />
+              <img [src]="alertSeverityIcons[alert.id]" alt="" />
             </span>
 
             <div>
               <strong>{{ alert.alertType | enumLabel: "AlertType" }}</strong>
               <small>
-                {{ getAnimalName(alert.animalId) }} -
-                {{ alert.createdAt | date: "shortTime" }}
+                {{ animalNames[alert.animalId] || 'Animal #' + alert.animalId }} -
+                {{ alert.createdAt | belgradeDate:'shortTime' }}
               </small>
             </div>
 
-            <span class="pill" [ngClass]="getSeverityClass(alert.severity)">
+            <span class="pill" [ngClass]="alertSeverityClasses[alert.id]">
               {{ alert.severity | enumLabel: "Severity" }}
             </span>
           </div>
@@ -186,7 +182,7 @@
 
             <div>
               <strong>{{ report.reportType | enumLabel: "ReportType" }}</strong>
-              <small>{{ report.createdAt | date: "MMM d, HH:mm" }}</small>
+              <small>{{ report.createdAt | belgradeDate:'dayMonthTime' }}</small>
             </div>
 
             <i></i>

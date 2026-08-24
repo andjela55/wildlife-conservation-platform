@@ -39,6 +39,25 @@
   margin: 0 0 12px;
 }
 
+.actions-cell {
+  min-width: 190px;
+}
+
+.user-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.area-action {
+  border-color: transparent !important;
+  background: var(--leaf-100) !important;
+  color: var(--forest-700) !important;
+}
+
 @media (min-width: 1500px) {
   .workflow-panel .form-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));

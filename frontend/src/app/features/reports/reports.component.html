@@ -10,14 +10,14 @@
   <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
   <div *ngIf="successMessage" class="message success">{{ successMessage }}</div>
 
-  <div class="grid two">
+  <div class="grid two" [class.single]="!canCreateReports">
     <section class="table-panel">
       <h2>Reports</h2>
       <div class="table-wrap" *ngIf="reports.length; else noReports">
         <table mat-table [dataSource]="reports">
           <ng-container matColumnDef="subject">
             <th mat-header-cell *matHeaderCellDef>Subject</th>
-            <td mat-cell *matCellDef="let report">{{ getAnimalName(report.animalId) }}</td>
+            <td mat-cell *matCellDef="let report">{{ report.animalId ? (animalNames[report.animalId] || 'Animal #' + report.animalId) : 'Area report' }}</td>
           </ng-container>
           <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef>Type</th>
@@ -25,15 +25,23 @@
           </ng-container>
           <ng-container matColumnDef="severity">
             <th mat-header-cell *matHeaderCellDef>Severity</th>
-            <td mat-cell *matCellDef="let report"><span class="pill" [ngClass]="getSeverityClass(report.severity)">{{ report.severity | enumLabel:'Severity' }}</span></td>
+            <td mat-cell *matCellDef="let report"><span class="pill" [ngClass]="severityClasses[report.id]">{{ report.severity | enumLabel:'Severity' }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="latitude">
+            <th mat-header-cell *matHeaderCellDef>Latitude</th>
+            <td mat-cell *matCellDef="let report">{{ report.latitude }}</td>
+          </ng-container>
+          <ng-container matColumnDef="longitude">
+            <th mat-header-cell *matHeaderCellDef>Longitude</th>
+            <td mat-cell *matCellDef="let report">{{ report.longitude }}</td>
           </ng-container>
           <ng-container matColumnDef="createdAt">
             <th mat-header-cell *matHeaderCellDef>Created</th>
-            <td mat-cell *matCellDef="let report">{{ report.createdAt | date:'short' }}</td>
+            <td mat-cell *matCellDef="let report">{{ report.createdAt | belgradeDate }}</td>
           </ng-container>
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
-            <td mat-cell *matCellDef="let report">{{ report.description }}</td>
+            <td mat-cell class="description-cell" *matCellDef="let report">{{ report.description }}</td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="reportColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: reportColumns"></tr>
@@ -52,20 +60,14 @@
       </ng-template>
     </section>
 
-    <section class="panel">
+    <section class="panel" *ngIf="canCreateReports">
       <h2>Create Report</h2>
       <form class="form-grid" [formGroup]="reportForm" (ngSubmit)="createReport()">
         <div *ngIf="reportFormErrorMessage" class="message error form-message">
           {{ reportFormErrorMessage }}
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Animal</mat-label>
-          <mat-select formControlName="animalId">
-            <mat-option [value]="null">Area report</mat-option>
-            <mat-option *ngFor="let animal of animals" [value]="animal.id">{{ animal.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-searchable-select label="Animal" [options]="animalOptions" formControlName="animalId"></app-searchable-select>
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Type</mat-label>
@@ -83,17 +85,15 @@
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Latitude</mat-label>
-            <input matInput type="number" step="0.000001" formControlName="latitude" />
+            <input matInput type="number" step="0.000001" formControlName="latitude" required />
+            <mat-error *ngIf="reportForm.controls['latitude'].hasError('required')">Latitude is required.</mat-error>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Longitude</mat-label>
-            <input matInput type="number" step="0.000001" formControlName="longitude" />
+            <input matInput type="number" step="0.000001" formControlName="longitude" required />
+            <mat-error *ngIf="reportForm.controls['longitude'].hasError('required')">Longitude is required.</mat-error>
           </mat-form-field>
         </div>
-        <mat-form-field appearance="outline">
-          <mat-label>Created at</mat-label>
-          <input matInput type="datetime-local" formControlName="createdAt" />
-        </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Description</mat-label>
           <textarea matInput formControlName="description" maxlength="2000"></textarea>

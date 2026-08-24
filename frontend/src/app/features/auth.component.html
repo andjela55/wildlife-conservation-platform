@@ -16,8 +16,7 @@
 
     <nav class="nav-list" aria-label="Primary navigation">
       <a
-        *ngFor="let item of navigationItems"
-        [hidden]="!canShowNavigationItem(item)"
+        *ngFor="let item of navigationItems$ | async"
         [routerLink]="item.Link"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: item.Exact === true }"
@@ -38,11 +37,11 @@
       <span class="nav-label">Sign out</span>
     </button>
 
-    <div class="sidebar-note" *ngIf="currentUser$ | async as currentUser">
+    <div class="sidebar-note" *ngIf="currentUserViewModel$ | async as currentUserViewModel">
       <div class="ranger-avatar">RA</div>
       <div>
-        <strong>{{ currentUser.fullName }}</strong>
-        <span>{{ currentUser.role | enumLabel:'UserRole' }}</span>
+        <strong>{{ currentUserViewModel.user.fullName }}</strong>
+        <span>{{ currentUserViewModel.roleNames }}</span>
       </div>
     </div>
   </aside>

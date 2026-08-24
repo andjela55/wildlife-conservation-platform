@@ -149,6 +149,10 @@ button {
   grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
 }
 
+.grid.two.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .grid.three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -202,6 +206,13 @@ mat-form-field {
   width: 100%;
 }
 
+.mat-mdc-form-field-hint,
+.mat-mdc-form-field-hint-wrapper {
+  font-size: 10px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
 .mat-mdc-table {
   width: 100%;
   background: transparent;
@@ -220,6 +231,13 @@ mat-form-field {
   border-bottom-color: rgba(45, 74, 64, 0.1);
   padding: 14px 12px;
   vertical-align: middle;
+}
+
+.description-cell {
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mat-mdc-header-cell {
@@ -285,6 +303,13 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .button,
@@ -423,6 +448,10 @@ th {
   border-radius: 999px !important;
 }
 
+.confirm-dialog-panel .mat-mdc-dialog-surface {
+  border-radius: 14px !important;
+}
+
 .mat-mdc-form-field {
   --mdc-outlined-text-field-focus-outline-color: #2e7441;
   --mdc-outlined-text-field-hover-outline-color: rgba(31, 93, 67, 0.58);
@@ -445,6 +474,19 @@ th {
 
 .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
   --mat-option-selected-state-label-text-color: var(--forest-700);
+}
+
+.mat-calendar-body-selected {
+  background-color: #dce8df !important;
+  color: var(--ink) !important;
+}
+
+.mat-calendar-body-today:not(.mat-calendar-body-selected) {
+  border-color: rgba(31, 93, 67, 0.35) !important;
+}
+
+.mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover > .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+  background-color: #f1f5f2 !important;
 }
 
 .mat-mdc-tab-group {
@@ -513,6 +555,26 @@ th {
   button:not(.mat-mdc-button-base) {
     width: 100%;
   }
+}
+
+/* Calendar cells are buttons, but should not inherit the application's pill button style. */
+button.mat-calendar-body-cell,
+button.mat-calendar-body-cell:hover,
+button.mat-calendar-body-cell:focus {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  box-shadow: none;
+}
+
+button.mat-calendar-body-cell:disabled {
+  cursor: default;
+  opacity: 1;
 }
 .animal-marker {
   position: relative;

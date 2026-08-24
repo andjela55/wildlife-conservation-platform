@@ -21,3 +21,10 @@ export interface UnassignCollarRequest {
   reason: string | null;
   notes: string | null;
 }
+
+export interface CollarAssignmentQuery {
+  animalId?: number;
+  assignedFrom?: string;
+  assignedTo?: string;
+  activeOnly?: boolean;
+}

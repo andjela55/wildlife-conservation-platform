@@ -8,13 +8,17 @@ import {
   CollarAssignment,
   collarStatusOptions,
   CreateCollarAssignmentRequest,
-  CreateCollarRequest,
-  PagedResult,
-  UnassignCollarRequest
+  PermissionCodes,
+  UpsertCollarRequest
 } from '../../core/models';
 import { AnimalApiService } from '../../core/services/animal-api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
-import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
+import { localDateBoundaryToIso, localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
+import { SearchableSelectOption } from '../../shared/searchable-select/searchable-select.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-collars',
@@ -25,19 +29,27 @@ export class CollarsComponent implements OnInit, OnDestroy {
   collars: Array<Collar> = [];
   collarOptions: Array<Collar> = [];
   animals: Array<Animal> = [];
-  activeAssignments: Array<CollarAssignment> = [];
-  collarColumns: Array<string> = ['serialNumber', 'model', 'manufacturer', 'status'];
+  assignments: Array<CollarAssignment> = [];
+  animalOptions: Array<SearchableSelectOption> = [];
+  availableCollarOptions: Array<SearchableSelectOption> = [];
+  animalNames: Record<number, string> = {};
+  collarSerials: Record<number, string> = {};
+  collarColumns: Array<string> = ['serialNumber', 'model', 'manufacturer', 'status', 'actions'];
+  assignmentColumns: Array<string> = ['animal', 'collar', 'assignedAt', 'unassignedAt', 'actions'];
   collarStatusOptions = collarStatusOptions;
   pageSizeOptions: Array<number> = [5, 10, 20];
   collarPageIndex = 0;
   collarPageSize = 10;
   collarsTotalCount = 0;
+  workflowTabIndex = 0;
   isLoading = false;
   errorMessage = '';
   collarFormErrorMessage = '';
   assignmentFormErrorMessage = '';
+  assignmentFilterErrorMessage = '';
   unassignFormErrorMessage = '';
   successMessage = '';
+  editingCollarId: number | null = null;
   private readonly destroy$ = new Subject<void>();
 
   collarForm = this.fb.group({
@@ -56,20 +68,32 @@ export class CollarsComponent implements OnInit, OnDestroy {
     notes: ['', Validators.maxLength(1000)]
   });
 
-  unassignForm = this.fb.group({
-    assignmentId: [null, [Validators.required, Validators.min(1)]],
-    unassignedAt: [toLocalDateTimeInputValue()],
-    reason: ['', Validators.maxLength(250)],
-    notes: ['', Validators.maxLength(1000)]
+  assignmentFilterForm = this.fb.group({
+    assignedFrom: [null],
+    assignedTo: [null]
   });
 
   constructor(
     private readonly collarApi: CollarApiService,
     private readonly animalApi: AnimalApiService,
+    private readonly authService: AuthService,
+    private readonly dialog: MatDialog,
     private readonly fb: UntypedFormBuilder
   ) {}
 
+  canManageCollars = false;
+  canManageAssignments = false;
+
   ngOnInit(): void {
+    this.canManageCollars = this.authService.hasPermission(PermissionCodes.CollarsWrite);
+    this.canManageAssignments = this.authService.hasPermission(PermissionCodes.CollarAssignmentsWrite);
+    if (!this.canManageCollars) {
+      this.collarColumns = ['serialNumber', 'model', 'manufacturer', 'status'];
+    }
+    if (!this.canManageAssignments) {
+      this.assignmentColumns = ['animal', 'collar', 'assignedAt', 'unassignedAt'];
+    }
+
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
@@ -85,7 +109,7 @@ export class CollarsComponent implements OnInit, OnDestroy {
   onCollarPageChanged(event: PageEvent): void {
     this.collarPageIndex = event.pageIndex;
     this.collarPageSize = event.pageSize;
-    this.refresh();
+    this.applyCollarPage();
   }
 
   loadData(): Observable<void> {
@@ -93,13 +117,9 @@ export class CollarsComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     return forkJoin({
-      collars: this.collarApi.getPaged({
-        pageNumber: this.collarPageIndex + 1,
-        pageSize: this.collarPageSize
-      }),
       collarOptions: this.collarApi.getAll(),
       animals: this.animalApi.getAll(),
-      activeAssignments: this.collarApi.getActiveAssignments()
+      assignments: this.collarApi.getAssignments(this.mapAssignmentFilter())
     })
       .pipe(
         map((result) => this.mapLoadData(result)),
@@ -109,19 +129,6 @@ export class CollarsComponent implements OnInit, OnDestroy {
         }),
         finalize(() => (this.isLoading = false))
       );
-  }
-
-  getAnimalName(animalId: number): string {
-    return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
-  }
-
-  getCollarSerial(collarId: number): string {
-    return this.collarOptions.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
-  }
-
-  getAssignmentLabel(assignment: CollarAssignment): string {
-    const assignedAt = new Date(assignment.assignedAt).toLocaleString();
-    return `${this.getAnimalName(assignment.animalId)} - ${this.getCollarSerial(assignment.collarId)} - ${assignedAt}`;
   }
 
   createCollar(): void {
@@ -134,20 +141,51 @@ export class CollarsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.collarApi
-      .create(this.mapCreateCollarRequest())
+    const request = this.mapUpsertCollarRequest();
+    const operation = this.editingCollarId === null
+      ? this.collarApi.create(request)
+      : this.collarApi.update(this.editingCollarId, request);
+    operation
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.successMessage = 'Collar created.';
+          this.successMessage = this.editingCollarId === null ? 'Collar created.' : 'Collar updated.';
           this.collarFormErrorMessage = '';
           this.collarForm.reset({ status: 'Available' });
+          this.editingCollarId = null;
           this.refresh();
         },
         error: () => {
-          this.collarFormErrorMessage = 'Unable to create collar.';
+          this.collarFormErrorMessage = 'Unable to save collar.';
         }
       });
+  }
+
+  editCollar(collar: Collar): void {
+    this.editingCollarId = collar.id;
+    this.workflowTabIndex = 0;
+    this.collarForm.reset({
+      serialNumber: collar.serialNumber,
+      model: collar.model ?? '',
+      manufacturer: collar.manufacturer ?? '',
+      status: collar.status,
+      notes: collar.notes ?? ''
+    });
+  }
+
+  deleteCollar(collar: Collar): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: {
+      title: 'Delete collar', message: `Delete collar "${collar.serialNumber}"?`
+    }, panelClass: 'confirm-dialog-panel' });
+    dialogRef.componentInstance.getConfirm().pipe(take(1), takeUntil(this.destroy$)).subscribe(() => this.collarApi.delete(collar.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.successMessage = 'Collar deleted.'; this.refresh(); },
+      error: () => this.errorMessage = 'Unable to delete collar.'
+    }));
+  }
+
+  cancelCollarEdit(): void {
+    this.editingCollarId = null;
+    this.collarForm.reset({ status: 'Available' });
   }
 
   assignCollar(): void {
@@ -176,25 +214,17 @@ export class CollarsComponent implements OnInit, OnDestroy {
       });
   }
 
-  unassignCollar(): void {
+  unassignCollar(assignment: CollarAssignment): void {
     this.unassignFormErrorMessage = '';
     this.successMessage = '';
 
-    if (this.unassignForm.invalid) {
-      this.unassignForm.markAllAsTouched();
-      this.unassignFormErrorMessage = 'Please fix the highlighted fields.';
-      return;
-    }
-
-    const value = this.unassignForm.getRawValue();
     this.collarApi
-      .unassign(value.assignmentId, this.mapUnassignCollarRequest())
+      .unassign(assignment.id, { unassignedAt: null, reason: null, notes: null })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.successMessage = 'Collar unassigned.';
           this.unassignFormErrorMessage = '';
-          this.unassignForm.reset({ unassignedAt: toLocalDateTimeInputValue() });
           this.refresh();
         },
         error: () => {
@@ -203,22 +233,46 @@ export class CollarsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private mapLoadData(result: {
-    collars: PagedResult<Collar>;
-    collarOptions: Array<Collar>;
-    animals: Array<Animal>;
-    activeAssignments: Array<CollarAssignment>;
-  }): void {
-    this.collars = result.collars.items;
-    this.collarOptions = result.collarOptions;
-    this.collarsTotalCount = result.collars.totalCount;
-    this.collarPageIndex = result.collars.pageNumber - 1;
-    this.collarPageSize = result.collars.pageSize;
-    this.animals = result.animals;
-    this.activeAssignments = result.activeAssignments;
+  applyAssignmentFilter(): void {
+    this.assignmentFilterErrorMessage = '';
+    const value = this.assignmentFilterForm.getRawValue();
+    if (value.assignedFrom && value.assignedTo && new Date(value.assignedFrom) > new Date(value.assignedTo)) {
+      this.assignmentFilterErrorMessage = 'Assigned from cannot be later than Assigned to.';
+      return;
+    }
+    this.refresh();
   }
 
-  private mapCreateCollarRequest(): CreateCollarRequest {
+  clearAssignmentFilter(): void {
+    this.assignmentFilterErrorMessage = '';
+    this.assignmentFilterForm.reset();
+    this.refresh();
+  }
+
+  private mapLoadData(result: {
+    collarOptions: Array<Collar>;
+    animals: Array<Animal>;
+    assignments: Array<CollarAssignment>;
+  }): void {
+    this.collarOptions = result.collarOptions;
+    this.collarsTotalCount = result.collarOptions.length;
+    this.applyCollarPage();
+    this.animals = result.animals;
+    this.assignments = result.assignments;
+    this.animalOptions = this.animals.map((animal) => ({ value: animal.id, label: animal.name }));
+    this.availableCollarOptions = this.collarOptions
+      .filter((collar) => collar.status === 'Available')
+      .map((collar) => ({ value: collar.id, label: collar.serialNumber }));
+    this.animalNames = Object.fromEntries(this.animals.map((animal) => [animal.id, animal.name]));
+    this.collarSerials = Object.fromEntries(this.collarOptions.map((collar) => [collar.id, collar.serialNumber]));
+  }
+
+  private applyCollarPage(): void {
+    const start = this.collarPageIndex * this.collarPageSize;
+    this.collars = this.collarOptions.slice(start, start + this.collarPageSize);
+  }
+
+  private mapUpsertCollarRequest(): UpsertCollarRequest {
     const value = this.collarForm.getRawValue();
     return {
       serialNumber: value.serialNumber,
@@ -240,12 +294,11 @@ export class CollarsComponent implements OnInit, OnDestroy {
     };
   }
 
-  private mapUnassignCollarRequest(): UnassignCollarRequest {
-    const value = this.unassignForm.getRawValue();
+  private mapAssignmentFilter(): { assignedFrom?: string; assignedTo?: string } {
+    const value = this.assignmentFilterForm.getRawValue();
     return {
-      unassignedAt: localDateTimeInputToIso(value.unassignedAt),
-      reason: value.reason || null,
-      notes: value.notes || null
+      assignedFrom: value.assignedFrom ? localDateBoundaryToIso(value.assignedFrom, false) : undefined,
+      assignedTo: value.assignedTo ? localDateBoundaryToIso(value.assignedTo, true) : undefined
     };
   }
 }

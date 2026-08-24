@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Route, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { AppNavigationRoute } from '../app-route-definitions';
 import { AuthenticatedUser } from '../core/models';
 import { AuthService } from '../core/services/auth.service';
@@ -12,23 +12,30 @@ import { AuthService } from '../core/services/auth.service';
 })
 export class AuthComponent {
   isSidebarCollapsed = false;
-  readonly currentUser$: Observable<AuthenticatedUser | null>;
-  readonly navigationItems: Array<AppNavigationRoute>;
+  readonly currentUserViewModel$: Observable<{ user: AuthenticatedUser; roleNames: string } | null>;
+  readonly navigationItems$: Observable<Array<AppNavigationRoute>>;
 
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router
   ) {
-    this.currentUser$ = this.authService.currentUser$;
-    this.navigationItems = this.getNavigationItems();
+    const navigationItems = this.getNavigationItems();
+
+    this.currentUserViewModel$ = this.authService.currentUser$.pipe(
+      map((user) => user
+        ? {
+            user,
+            roleNames: user.roles.map((role) => role.name).join(', ') || 'No role'
+          }
+        : null)
+    );
+    this.navigationItems$ = this.authService.currentUser$.pipe(
+      map(() => navigationItems.filter((item) => this.authService.hasPermission(item.Permission)))
+    );
   }
 
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
-  }
-
-  canShowNavigationItem(item: AppNavigationRoute): boolean {
-    return this.authService.hasAnyRole(item.Roles);
   }
 
   logout(): void {

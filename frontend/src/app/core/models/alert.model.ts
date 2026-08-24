@@ -19,7 +19,6 @@ export interface CreateAlertRequest {
   alertType: AlertType;
   severity: Severity;
   description: string;
-  createdAt: string;
 }
 
 export interface ResolveAlertRequest {

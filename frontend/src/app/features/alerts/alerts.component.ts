@@ -2,12 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, forkJoin, map, Observable, of, Subject, takeUntil } from 'rxjs';
-import { Alert, alertTypeOptions, Animal, Collar, CollarAssignment, CreateAlertRequest, PagedResult, Severity, severityOptions } from '../../core/models';
+import { Alert, alertTypeOptions, Animal, Collar, CollarAssignment, CreateAlertRequest, PagedResult, PermissionCodes, severityOptions } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
 import { AnimalApiService } from '../../core/services/animal-api.service';
 import { CollarApiService } from '../../core/services/collar-api.service';
-import { localDateTimeInputToIso, toLocalDateTimeInputValue } from '../../core/utils/date-utils';
 import { enumKey } from '../../core/utils/enum-utils';
+import { SearchableSelectOption } from '../../shared/searchable-select/searchable-select.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-alerts',
@@ -19,6 +20,11 @@ export class AlertsComponent implements OnInit, OnDestroy {
   animals: Array<Animal> = [];
   collars: Array<Collar> = [];
   activeAssignments: Array<CollarAssignment> = [];
+  animalOptions: Array<SearchableSelectOption> = [];
+  animalNames: Record<number, string> = {};
+  collarSerials: Record<number, string> = {};
+  severityClasses: Record<number, string> = {};
+  selectedAnimalCollarSerial = 'Select animal first';
   alertColumns: Array<string> = ['animal', 'collar', 'type', 'severity', 'status', 'actions'];
   alertTypeOptions = alertTypeOptions;
   severityOptions = severityOptions;
@@ -36,52 +42,34 @@ export class AlertsComponent implements OnInit, OnDestroy {
     animalId: [null, [Validators.required, Validators.min(1)]],
     alertType: ['Manual', Validators.required],
     severity: ['Medium', Validators.required],
-    description: ['', [Validators.required, Validators.maxLength(2000)]],
-    createdAt: [toLocalDateTimeInputValue(), Validators.required]
+    description: ['', [Validators.required, Validators.maxLength(2000)]]
   });
 
   constructor(
     private readonly alertApi: AlertApiService,
     private readonly animalApi: AnimalApiService,
     private readonly collarApi: CollarApiService,
+    private readonly authService: AuthService,
     private readonly fb: UntypedFormBuilder
   ) {}
 
+  canManageAlerts = false;
+
   ngOnInit(): void {
+    this.canManageAlerts = this.authService.hasPermission(PermissionCodes.AlertsWrite);
+    if (!this.canManageAlerts) {
+      this.alertColumns = ['animal', 'collar', 'type', 'severity', 'status'];
+    }
+
     this.loadData().pipe(takeUntil(this.destroy$)).subscribe();
+    this.alertForm.controls['animalId'].valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((animalId) => this.updateSelectedAnimalCollarSerial(animalId));
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  getAnimalName(animalId: number): string {
-    return this.animals.find((animal) => animal.id === animalId)?.name ?? `Animal #${animalId}`;
-  }
-
-  getCollarSerial(collarId: number | null): string {
-    if (!collarId) {
-      return '-';
-    }
-
-    return this.collars.find((collar) => collar.id === collarId)?.serialNumber ?? `Collar #${collarId}`;
-  }
-
-  getSelectedAnimalCollarSerial(): string {
-    const animalId = this.alertForm.getRawValue().animalId;
-
-    if (!animalId) {
-      return 'Select animal first';
-    }
-
-    const assignment = this.activeAssignments.find((x) => x.animalId === animalId);
-
-    return assignment ? this.getCollarSerial(assignment.collarId) : 'No active collar assigned';
-  }
-
-  getSeverityClass(severity: Severity): string {
-    return enumKey(severity, 'Severity').toLowerCase();
   }
 
   refresh(): void {
@@ -137,8 +125,7 @@ export class AlertsComponent implements OnInit, OnDestroy {
           this.alertForm.reset({
             animalId: null,
             alertType: 'Manual',
-            severity: 'Medium',
-            createdAt: toLocalDateTimeInputValue()
+            severity: 'Medium'
           });
           this.refresh();
         },
@@ -173,6 +160,13 @@ export class AlertsComponent implements OnInit, OnDestroy {
     this.animals = result.animals;
     this.collars = result.collars;
     this.activeAssignments = result.activeAssignments;
+    this.animalOptions = this.animals.map((animal) => ({ value: animal.id, label: animal.name }));
+    this.animalNames = Object.fromEntries(this.animals.map((animal) => [animal.id, animal.name]));
+    this.collarSerials = Object.fromEntries(this.collars.map((collar) => [collar.id, collar.serialNumber]));
+    this.severityClasses = Object.fromEntries(
+      this.alerts.map((alert) => [alert.id, enumKey(alert.severity, 'Severity').toLowerCase()])
+    );
+    this.updateSelectedAnimalCollarSerial(this.alertForm.getRawValue().animalId);
   }
 
   private mapCreateAlertRequest(): CreateAlertRequest {
@@ -181,8 +175,19 @@ export class AlertsComponent implements OnInit, OnDestroy {
       animalId: value.animalId,
       alertType: value.alertType,
       severity: value.severity,
-      description: value.description,
-      createdAt: localDateTimeInputToIso(value.createdAt)
+      description: value.description
     };
+  }
+
+  private updateSelectedAnimalCollarSerial(animalId: number | null): void {
+    if (!animalId) {
+      this.selectedAnimalCollarSerial = 'Select animal first';
+      return;
+    }
+
+    const assignment = this.activeAssignments.find((item) => item.animalId === animalId);
+    this.selectedAnimalCollarSerial = assignment
+      ? this.collarSerials[assignment.collarId] ?? `Collar #${assignment.collarId}`
+      : 'No active collar assigned';
   }
 }

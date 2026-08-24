@@ -23,6 +23,32 @@
   font-size: 22px;
 }
 
+.detail-table-section {
+  display: block;
+  margin-top: 28px;
+  min-width: 0;
+}
+
+.detail-table-section h3 {
+  margin: 0 0 10px;
+  color: #143326;
+  font-size: 15px;
+}
+
+.detail-table-section .table-wrap {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.detail-table-section table {
+  min-width: 520px;
+}
+
+.empty.compact {
+  padding: 8px 0;
+}
+
 .section-spacer {
   border-top: 1px solid #e7ece8;
   margin-top: 28px;

@@ -1,4 +1,4 @@
-import { UserRole, UserRoles } from './core/models';
+import { PermissionCode, PermissionCodes } from './core/models';
 
 export interface AppRouteDefinition {
   Path: string;
@@ -6,7 +6,7 @@ export interface AppRouteDefinition {
   Label?: string;
   Icon?: string;
   Exact?: boolean;
-  Roles?: Array<UserRole>;
+  Permission?: PermissionCode;
 }
 
 export interface AppNavigationRoute {
@@ -14,7 +14,7 @@ export interface AppNavigationRoute {
   Link: string;
   Icon: string;
   Exact?: boolean;
-  Roles: Array<UserRole>;
+  Permission: PermissionCode;
 }
 
 export const AppRoutes = {
@@ -28,54 +28,54 @@ export const AppRoutes = {
     Label: 'Dashboard',
     Icon: 'assets/icons/home.svg',
     Exact: true,
-    Roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
+    Permission: PermissionCodes.AnimalsRead
   },
   Species: {
     Path: 'species',
     Link: '/species',
     Label: 'Species',
     Icon: 'assets/icons/category.svg',
-    Roles: [UserRoles.Admin, UserRoles.Researcher]
+    Permission: PermissionCodes.SpeciesRead
   },
   Animals: {
     Path: 'animals',
     Link: '/animals',
     Label: 'Animals',
     Icon: 'assets/icons/paw.svg',
-    Roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
+    Permission: PermissionCodes.AnimalsRead
   },
   Collars: {
     Path: 'collars',
     Link: '/collars',
     Label: 'Collars',
     Icon: 'assets/icons/collar.svg',
-    Roles: [UserRoles.Admin, UserRoles.Researcher]
+    Permission: PermissionCodes.CollarsRead
   },
   Reports: {
     Path: 'reports',
     Link: '/reports',
     Label: 'Reports',
     Icon: 'assets/icons/report.svg',
-    Roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
+    Permission: PermissionCodes.RangerReportsRead
   },
   Alerts: {
     Path: 'alerts',
     Link: '/alerts',
     Label: 'Alerts',
     Icon: 'assets/icons/alert.svg',
-    Roles: [UserRoles.Admin, UserRoles.Ranger, UserRoles.Researcher]
+    Permission: PermissionCodes.AlertsRead
   },
   Users: {
     Path: 'users',
     Link: '/users',
     Label: 'Users',
     Icon: 'assets/icons/category.svg',
-    Roles: [UserRoles.Master]
+    Permission: PermissionCodes.UsersWrite
   }
 } satisfies Record<string, AppRouteDefinition>;
 
 export function toNavigationRoute(route: AppRouteDefinition): AppNavigationRoute {
-  if (!route.Label || !route.Icon || !route.Roles) {
+  if (!route.Label || !route.Icon || !route.Permission) {
     throw new Error(`Route '${route.Path}' is missing navigation metadata.`);
   }
 
@@ -84,6 +84,6 @@ export function toNavigationRoute(route: AppRouteDefinition): AppNavigationRoute
     Link: route.Link,
     Icon: route.Icon,
     Exact: route.Exact,
-    Roles: route.Roles
+    Permission: route.Permission
   };
 }

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AppRoutes, toNavigationRoute } from './app-route-definitions';
 import { AuthGuard } from './core/guards/auth.guard';
-import { RoleGuard } from './core/guards/role.guard';
+import { PermissionGuard } from './core/guards/permission.guard';
 import { AlertsComponent } from './features/alerts/alerts.component';
 import { AnimalsComponent } from './features/animals/animals.component';
 import { AuthComponent } from './features/auth.component';
@@ -20,13 +20,13 @@ const routes: Routes = [
     component: AuthComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: AppRoutes.Dashboard.Path, pathMatch: 'full', component: DashboardComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Dashboard.Roles, navigation: toNavigationRoute(AppRoutes.Dashboard) } },
-      { path: AppRoutes.Animals.Path, component: AnimalsComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Animals.Roles, navigation: toNavigationRoute(AppRoutes.Animals) } },
-      { path: AppRoutes.Species.Path, component: SpeciesComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Species.Roles, navigation: toNavigationRoute(AppRoutes.Species) } },
-      { path: AppRoutes.Reports.Path, component: ReportsComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Reports.Roles, navigation: toNavigationRoute(AppRoutes.Reports) } },
-      { path: AppRoutes.Alerts.Path, component: AlertsComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Alerts.Roles, navigation: toNavigationRoute(AppRoutes.Alerts) } },
-      { path: AppRoutes.Collars.Path, component: CollarsComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Collars.Roles, navigation: toNavigationRoute(AppRoutes.Collars) } },
-      { path: AppRoutes.Users.Path, component: UsersComponent, canActivate: [RoleGuard], data: { roles: AppRoutes.Users.Roles, navigation: toNavigationRoute(AppRoutes.Users) } }
+      { path: AppRoutes.Dashboard.Path, pathMatch: 'full', component: DashboardComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Dashboard.Permission, navigation: toNavigationRoute(AppRoutes.Dashboard) } },
+      { path: AppRoutes.Animals.Path, component: AnimalsComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Animals.Permission, navigation: toNavigationRoute(AppRoutes.Animals) } },
+      { path: AppRoutes.Species.Path, component: SpeciesComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Species.Permission, navigation: toNavigationRoute(AppRoutes.Species) } },
+      { path: AppRoutes.Reports.Path, component: ReportsComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Reports.Permission, navigation: toNavigationRoute(AppRoutes.Reports) } },
+      { path: AppRoutes.Alerts.Path, component: AlertsComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Alerts.Permission, navigation: toNavigationRoute(AppRoutes.Alerts) } },
+      { path: AppRoutes.Collars.Path, component: CollarsComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Collars.Permission, navigation: toNavigationRoute(AppRoutes.Collars) } },
+      { path: AppRoutes.Users.Path, component: UsersComponent, canActivate: [PermissionGuard], data: { permission: AppRoutes.Users.Permission, navigation: toNavigationRoute(AppRoutes.Users) } }
     ]
   },
   { path: '**', redirectTo: '' }

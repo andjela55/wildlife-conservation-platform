@@ -62,7 +62,7 @@ export class AnimalTrackingSignalRService implements OnDestroy {
         accessTokenFactory: () => this.authService.token ?? ''
       })
       .withAutomaticReconnect()
-      .configureLogging(LogLevel.Information)
+      .configureLogging(LogLevel.None)
       .build();
 
     this.connection.onreconnecting(() => this.isConnectedSubject.next(false));
