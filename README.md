@@ -37,8 +37,8 @@ ESP8266 collar simulator
 - GPS-like movement simulation along a predefined route
 - Animal, species, subspecies, collar, and collar-assignment management
 - Ranger reports and operational alerts
-- JWT authentication and role-based authorization
-- Simple role model stored directly on `User.Role`
+- JWT authentication and permission-based RBAC authorization
+- Many-to-many user-role and role-permission assignments
 - Seeded demo users and domain data for local testing
 - Swagger/OpenAPI documentation
 - xUnit backend test project
@@ -60,7 +60,7 @@ ESP8266 collar simulator
 
 - Angular 16 with NgModules
 - Reactive Forms
-- Angular Router with authentication and role guards
+- Angular Router with authentication and permission guards
 - Leaflet
 - Microsoft SignalR client
 - Development API proxy configuration
@@ -92,12 +92,13 @@ media/                      Animated preview and screenshots
 - Alerts
 - Users
 - Roles
+- Permissions
 
-## Authentication And Roles
+## Authentication And Authorization
 
-The MVP uses JWT bearer authentication. Roles are represented by the `UserRole` enum and stored directly in the `Role` property on each `User`; there is intentionally no separate role table in this phase. This keeps the authorization model small while supporting role-specific API policies and frontend route guards.
+The platform uses JWT bearer authentication and persisted role-based access control. Users and roles have a many-to-many relationship through `UserRoles`; roles and permissions have a many-to-many relationship through `RolePermissions`. Permission codes are represented by the strongly typed `PermissionCode` enum, while role assignments and permission grants are stored in PostgreSQL.
 
-The primary application roles are `Admin`, `Ranger`, and `Researcher`. Seeded accounts for all three roles are included for local testing, with their development-only credentials defined in `UserConfiguration`. A `Master` role is also present for restricted user-management operations.
+Backend policies and frontend guards check effective permissions rather than role names. The seeded roles are `Admin`, `Ranger`, `Researcher`, and `Master`; a seeded account for each role is included for local testing, with their development-only credentials defined in `UserConfiguration`.
 
 The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/location-points` also accepts an `X-Device-Key` header. This represents device-level collar authentication without requiring the ESP8266 simulator to obtain and refresh a user JWT. The location-point read endpoints continue to require an authenticated application user.
 
@@ -109,7 +110,7 @@ The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/locat
 
 - `WildlifeConservation.DTOs`
   - Incoming request DTOs only.
-  - DTOs are records, for example `CreateAnimalDto`, `UpdateAnimalDto`, and `ResolveAlertDto`.
+  - DTOs are records, for example `UpsertAnimalDto` and `ResolveAlertDto`.
 
 - `WildlifeConservation.Models`
   - Domain entities grouped by feature.
@@ -144,6 +145,10 @@ The SignalR hub requires a valid JWT. For prototype simulation, `POST /api/locat
 - AutoMapper profiles live beside the DTO/entity boundary where they are used.
 - New location points are saved before SignalR broadcasts are sent.
 - Services must not broadcast a location update until the database save succeeds.
+
+## Data Retention And Deletes
+
+For the MVP, delete operations physically remove dependent demo data inside a database transaction to keep referential integrity consistent. In a production version, most destructive deletes should be replaced with soft-delete or archive states, especially for animals, collars, location history, ranger reports, alerts, and users, because conservation systems need historical traceability.
 
 ## Run Locally
 
